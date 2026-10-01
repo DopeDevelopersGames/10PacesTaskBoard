@@ -218,6 +218,10 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .c-new textarea { flex: 1 1 260px; }
 .newtask { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 18px 20px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 14px; }
 .newtask h2 { font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; margin: 0; }
+.c-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.c-del { all: unset; cursor: pointer; font-size: 11.5px; color: var(--muted); }
+.c-del:hover, .c-del:focus-visible { color: var(--warn); text-decoration: underline; }
+.c-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -445,6 +449,14 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const t = find(); t.comments = [...(t.comments || []), op.comment];
       return `${op.id}: note from ${op.comment.by}`;
     }
+    if (op.type === "uncomment") {
+      const t = find();
+      const list = t.comments || [];
+      const i = list.findIndex(c => noteKey(c) === op.key);
+      if (i < 0) throw Object.assign(new Error("note gone"), { status: 410, note: true, id: op.id });
+      t.comments = list.filter((_, j) => j !== i);
+      return `${op.id}: deleted a note`;
+    }
     if (op.type === "add") {
       const id = nextId(d); op.newId = id;
       d.tickets.push({ ...op.ticket, id });
@@ -484,7 +496,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     }).catch(err => {
       if (err.status === 403 || err.status === 404) { canWrite = false; writeNote = "Can't save. Either your GitHub account only has read access to the tickets repo (ask Ben for Write access), or your token's Contents permission isn't Read and write."; toast(writeNote, 9000); }
       else if (err.status === 401) { toast("Your token expired or was revoked. Connect again."); disconnect(); }
-      else if (err.status === 410) toast(`${err.id} was deleted by someone else.`);
+      else if (err.status === 410) toast(err.note ? "That note was already deleted." : `${err.id} was deleted by someone else.`);
       else toast("Couldn't save. Refresh and try again.");
       return loadData(false).catch(() => {}).then(() => false);
     }).finally(() => { pending--; setConn(); rerenderKeepingFocus(); });
@@ -653,6 +665,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const openDetails = new Set();
   const drafts = new Map();
   let armedDelete = null;
+  let armedNote = null;
+  const noteKey = c => c.cid || `${c.at}|${c.by}`;
   const dv = (t, f) => { const d = drafts.get(t.id); return d && d[f] !== undefined ? d[f] : t[f]; };
   const opts = (list, val, label = o => o) => list.map(o => `<option value="${esc(o)}"${o === val ? " selected" : ""}>${esc(label(o))}</option>`).join("");
   const when = iso => { try { return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } };
@@ -661,7 +675,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const dis = canWrite ? "" : " disabled";
     const bb = dv(t, "blockedBy"); const bbStr = Array.isArray(bb) ? bb.join(", ") : (bb || "");
     const f = (name, inner, cls = "") => `<label class="${cls}">${name}${inner}</label>`;
-    const comments = (t.comments || []).map(c => `<li><div class="c-meta"><b>${esc(c.by || "someone")}</b> · ${esc(when(c.at))}</div><div class="c-text">${esc(c.text)}</div></li>`).join("");
+    const comments = (t.comments || []).map(c => {
+      const key = noteKey(c);
+      const del = canWrite ? `<button type="button" class="c-del" data-act="delnote" data-id="${esc(t.id)}" data-key="${esc(key)}">${armedNote === t.id + "|" + key ? "Click again to delete" : "Delete"}</button>` : "";
+      return `<li><div class="c-meta"><span><b>${esc(c.by || "someone")}</b> · ${esc(when(c.at))}</span>${del}</div><div class="c-text">${esc(c.text)}</div></li>`;
+    }).join("");
     const cd = (drafts.get(t.id) || {}).__comment || "";
     return `<div class="detail" data-id="${esc(t.id)}">
       <div class="d-grid">
@@ -707,6 +725,14 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const b = e.target.closest("[data-act]"); if (!b) return;
     const id = b.dataset.id, act = b.dataset.act;
     if (act !== "delete" && armedDelete) armedDelete = null;
+    if (act !== "delnote" && armedNote) armedNote = null;
+    if (act === "delnote") {
+      const k = id + "|" + b.dataset.key;
+      if (armedNote !== k) { armedNote = k; rerenderKeepingFocus(); return; }
+      armedNote = null;
+      queueOp({ type: "uncomment", id, key: b.dataset.key });
+      return;
+    }
     if (act === "toggle") { openDetails.has(id) ? openDetails.delete(id) : openDetails.add(id); rerenderKeepingFocus(); return; }
     const t = byId.get(id); if (!t) return;
     if (act === "save") {
@@ -729,7 +755,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (act === "comment") {
       const text = ((drafts.get(id) || {}).__comment || "").trim();
       if (!text) { toast("Write the note first."); return; }
-      queueOp({ type: "comment", id, comment: { by: login || "someone", at: new Date().toISOString(), text } }, () => { const dd = drafts.get(id); if (dd) { delete dd.__comment; if (!Object.keys(dd).length) drafts.delete(id); } });
+      queueOp({ type: "comment", id, comment: { cid: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), by: login || "someone", at: new Date().toISOString(), text } }, () => { const dd = drafts.get(id); if (dd) { delete dd.__comment; if (!Object.keys(dd).length) drafts.delete(id); } });
     }
     if (act === "delete") {
       if (armedDelete !== id) { armedDelete = id; rerenderKeepingFocus(); return; }
