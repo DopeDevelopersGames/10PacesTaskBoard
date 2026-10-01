@@ -170,6 +170,23 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .err { color: var(--warn); font-size: 13px; min-height: 1.2em; }
 .remember { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--muted); width: 100%; }
 .saving { color: var(--accent); }
+/* in-board help */
+.help { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 14px; }
+.help-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.help h2 { font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; margin: 0; }
+.help-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 960px) { .help-grid { grid-template-columns: minmax(0, 1fr); } }
+.help-card { background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; font-size: 13.5px; }
+.help-card h3 { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.help-card ol, .help-card ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.help-card p { margin: 0; color: var(--muted); }
+.help-card a { color: var(--accent); }
+.help-card dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 12px; align-items: baseline; }
+.help-card dt { font-weight: 600; white-space: nowrap; }
+.help-card dd { margin: 0; }
+.help-card code { font-family: var(--mono); font-size: 11.5px; background: var(--accent-soft); padding: 1px 4px; border-radius: 3px; }
+.help-card .chip { display: inline-block; margin-block: 1px; }
+.help-card b.ok { color: var(--ok); }
 </style>
 </head>
 <body>
@@ -178,6 +195,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     <h1>10 Paces, 9 Lives<small>Production tickets · Dope Developers</small></h1>
     <div class="head-actions" id="headActions" hidden>
       <span class="conn" id="conn"></span>
+      <button class="btn" id="helpBtn" type="button" aria-expanded="false" aria-controls="help">How to use</button>
       <button class="btn" id="refreshBtn" type="button">Refresh</button>
       <button class="btn" id="exportBtn" type="button">Export CSV</button>
       <button class="btn" id="disconnectBtn" type="button">Disconnect</button>
@@ -206,6 +224,47 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   </section>
 
   <div id="board" hidden>
+    <section class="help" id="help" hidden aria-labelledby="helpTitle">
+      <div class="help-head">
+        <h2 id="helpTitle">How to use the board</h2>
+        <button class="btn" id="helpClose" type="button">Got it, hide this</button>
+      </div>
+      <div class="help-grid">
+        <div class="help-card">
+          <h3>Your day-to-day</h3>
+          <ol>
+            <li>Set <b>Owner</b> to your name.</li>
+            <li>Tick <b>Ready to start only</b> to see what you can pick up now.</li>
+            <li>When you start a ticket, set it to <b>In progress</b>.</li>
+            <li>When it's ready for a look, set it to <b>Review</b>. Ben moves it to <b>Done</b>, or you do if it needs no review.</li>
+          </ol>
+          <p>Changes save straight away ("Saving…" then "Saved") and are recorded in GitHub under your name. Your filters are remembered on this device.</p>
+        </div>
+        <div class="help-card">
+          <h3>Reading a ticket</h3>
+          <dl>
+            <dt><code>STG-3-ART</code></dt><dd>Ticket ID: what it belongs to, then the discipline.</dd>
+            <dt>Prefixes</dt><dd><code>FND</code> foundation · <code>HUB</code> hub · <code>E-</code> enemy · <code>SRV</code> Survive · <code>STG</code> stage</dd>
+            <dt>Endings</dt><dd><code>DES</code> design · <code>COD</code> code · <code>ART</code> art · <code>ANI</code> animation · <code>AUD</code> audio · <code>NAR</code> narrative</dd>
+            <dt>Waiting on</dt><dd>Needs those tickets done first. Turns into <b class="ok">Ready</b> once they are.</dd>
+            <dt>Tiers</dt><dd><span class="chip tier-T1">T1</span> existing mechanics · <span class="chip tier-T2">T2</span> perk or modifier · <span class="chip tier-T3">T3</span> new mechanic · <span class="chip tier-Reuse">Reuse</span> existing art · <span class="chip tier-Mode">Mode</span> Survive mode</dd>
+          </dl>
+        </div>
+        <div class="help-card">
+          <h3>Good to know</h3>
+          <ul>
+            <li>Tickets are grouped by section, then by enemy, stage or system. Click a group to open or close it.</li>
+            <li><b>Stretch</b> and <b>Later</b> tickets are hidden until you tick <b>Include stretch &amp; later</b>.</li>
+            <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
+            <li>Ticket missing, or something on it is wrong? Tell Ben. Only he adds or edits ticket text.</li>
+            <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
+            <li><b>Export CSV</b> downloads whatever the current filters show.</li>
+          </ul>
+          <p><a href="setup.html">Setup guide and error fixes</a></p>
+        </div>
+      </div>
+    </section>
+
     <section class="summary" aria-label="Summary">
       <div class="panel">
         <h2>Progress</h2>
@@ -359,8 +418,19 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   }
   function showBoard() {
     $("connect").hidden = true; $("board").hidden = false; $("headActions").hidden = false;
+    setHelp(!store.get("tp-help-seen"));
     fillFilters(); setConn(); render();
   }
+  function setHelp(open) {
+    $("help").hidden = !open;
+    $("helpBtn").setAttribute("aria-expanded", String(open));
+    $("helpBtn").textContent = open ? "Hide help" : "How to use";
+  }
+  $("helpBtn").addEventListener("click", () => {
+    const open = $("help").hidden; setHelp(open);
+    if (open) $("help").scrollIntoView({ behavior: "smooth", block: "start" }); else store.set("tp-help-seen", "1");
+  });
+  $("helpClose").addEventListener("click", () => { setHelp(false); store.set("tp-help-seen", "1"); });
 
   $("orgName1").textContent = OWNER; $("orgName2").textContent = OWNER; $("repoName").textContent = DATA_REPO;
   $("tokenLink").href = "https://github.com/settings/personal-access-tokens/new";
