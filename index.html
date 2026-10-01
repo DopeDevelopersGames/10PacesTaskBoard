@@ -188,6 +188,36 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .help-card .chip { display: inline-block; margin-block: 1px; }
 .help-card b.ok { color: var(--ok); }
 .conn .bad { color: var(--warn); }
+/* ticket detail, notes, new task */
+.row .title { all: unset; font-weight: 500; cursor: pointer; display: inline; border-bottom: 1px dashed transparent; }
+.row .title:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.row .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.row.is-open { background: var(--raise); }
+.chip.ncount { background: var(--accent-soft); color: var(--accent); text-transform: none; letter-spacing: 0; }
+.detail { grid-column: 1 / -1; border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 12px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.d-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
+.d-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); min-width: 0; }
+.d-grid label.wide, .d-grid .wide { grid-column: 1 / -1; }
+.d-grid input:not([type=checkbox]), .d-grid textarea, .d-grid select, .c-new textarea { font: 13.5px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; text-transform: none; letter-spacing: 0; width: 100%; min-width: 0; }
+.d-grid textarea, .c-new textarea { resize: vertical; line-height: 1.45; }
+.d-grid label.tog { flex-direction: row; align-items: center; gap: 8px; font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--ink); }
+@media (max-width: 760px) { .d-grid { grid-template-columns: minmax(0, 1fr); } }
+.d-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.danger { color: var(--warn); }
+.btn.danger:hover { border-color: var(--warn); }
+.comments { display: flex; flex-direction: column; gap: 8px; }
+.comments h4 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.comments ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.comments li { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.c-meta { font-size: 11.5px; color: var(--muted); }
+.c-meta b { color: var(--ink); font-weight: 600; }
+.c-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+.c-empty { margin: 0; color: var(--muted); font-size: 13px; }
+.c-new { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.c-new textarea { flex: 1 1 260px; }
+.newtask { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 18px 20px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 14px; }
+.newtask h2 { font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; margin: 0; }
 </style>
 </head>
 <body>
@@ -196,6 +226,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     <h1>10 Paces, 9 Lives<small>Production tickets · Dope Developers</small></h1>
     <div class="head-actions" id="headActions" hidden>
       <span class="conn" id="conn"></span>
+      <button class="btn primary" id="newBtn" type="button" aria-expanded="false" aria-controls="newTask">+ New task</button>
       <button class="btn" id="helpBtn" type="button" aria-expanded="false" aria-controls="help">How to use</button>
       <button class="btn" id="refreshBtn" type="button">Refresh</button>
       <button class="btn" id="exportBtn" type="button">Export CSV</button>
@@ -257,7 +288,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li>Tickets are grouped by section, then by enemy, stage or system. Click a group to open or close it.</li>
             <li><b>Stretch</b> and <b>Later</b> tickets are hidden until you tick <b>Include stretch &amp; later</b>.</li>
             <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
-            <li>Ticket missing, or something on it is wrong? Tell Ben. Only he adds or edits ticket text.</li>
+            <li><b>Click a ticket's title</b> to open it: edit its details, add a note, or delete it.</li>
+            <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
+            <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
             <li><b>Export CSV</b> downloads whatever the current filters show.</li>
           </ul>
@@ -265,6 +298,30 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         </div>
       </div>
     </section>
+
+    <section class="newtask" id="newTask" hidden aria-labelledby="ntTitle">
+      <div class="help-head">
+        <h2 id="ntTitle">New task</h2>
+        <button class="btn" id="ntCancel" type="button">Cancel</button>
+      </div>
+      <form id="ntForm" class="d-grid">
+        <label class="wide">Title<input id="nt-title" required maxlength="160" placeholder="e.g. Boss 3: hit-flash VFX"></label>
+        <label class="wide">Description<textarea id="nt-notes" rows="3" placeholder="What needs doing, links, acceptance notes…"></textarea></label>
+        <label>Section<select id="nt-group"></select></label>
+        <label>Group (enemy, stage or system)<input id="nt-epic" list="epicList" placeholder="e.g. Boss 3"></label>
+        <label>Act<select id="nt-act"></select></label>
+        <label>Discipline<select id="nt-discipline"></select></label>
+        <label>Tier<select id="nt-tier"></select></label>
+        <label>Owner<select id="nt-owner"></select></label>
+        <label>Status<select id="nt-status"></select></label>
+        <label>Waits on (ticket IDs)<input id="nt-blockedBy" list="idList" placeholder="e.g. E-B3-ART, HUB-06"></label>
+        <label class="tog"><input type="checkbox" id="nt-stretch"> Stretch goal</label>
+        <label class="tog"><input type="checkbox" id="nt-later"> Later</label>
+        <div class="d-actions wide"><button class="btn primary" type="submit" id="ntSubmit">Add task</button><span class="err" id="ntErr"></span></div>
+      </form>
+    </section>
+    <datalist id="epicList"></datalist>
+    <datalist id="idList"></datalist>
 
     <section class="summary" aria-label="Summary">
       <div class="panel">
@@ -368,32 +425,71 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     return true;
   }
 
-  async function saveEdit(edit, attempt = 0) {
-    const t = byId.get(edit.id);
-    if (!t) throw Object.assign(new Error("gone"), { status: 404 });
-    t[edit.field] = edit.value;
-    const body = { message: `${edit.id}: ${edit.field} → ${edit.value}`, content: encodeB64(JSON.stringify(data, null, 1) + "\n"), sha };
+  // Every change is an operation applied to the latest data. If someone else saved first,
+  // the file is reloaded and the same operation is applied again on top of their change.
+  const gone = id => Object.assign(new Error("gone"), { status: 410, id });
+  function nextId(d) {
+    let max = 0;
+    for (const t of d.tickets || []) { const m = /^TK-(\d+)$/.exec(t.id); if (m) max = Math.max(max, +m[1]); }
+    return "TK-" + String(max + 1).padStart(3, "0");
+  }
+  function applyOp(d, op) {
+    const find = () => { const t = (d.tickets || []).find(x => x.id === op.id); if (!t) throw gone(op.id); return t; };
+    if (op.type === "set") {
+      const t = find(); Object.assign(t, op.fields);
+      const keys = Object.keys(op.fields);
+      return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
+        ? `${op.id}: ${keys[0]} → ${op.fields[keys[0]]}` : `${op.id}: edited ${keys.join(", ")}`;
+    }
+    if (op.type === "comment") {
+      const t = find(); t.comments = [...(t.comments || []), op.comment];
+      return `${op.id}: note from ${op.comment.by}`;
+    }
+    if (op.type === "add") {
+      const id = nextId(d); op.newId = id;
+      d.tickets.push({ ...op.ticket, id });
+      return `Add ${id}: ${op.ticket.title}`;
+    }
+    if (op.type === "delete") {
+      find();
+      d.tickets = d.tickets.filter(x => x.id !== op.id);
+      d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(op.id)) x.blockedBy = x.blockedBy.filter(b => b !== op.id); });
+      return `Delete ${op.id}`;
+    }
+    throw new Error("unknown op");
+  }
+
+  async function saveOp(op, attempt = 0) {
+    const message = applyOp(data, op);
+    byId = new Map(tickets().map(t => [t.id, t]));
+    const body = { message, content: encodeB64(JSON.stringify(data, null, 1) + "\n"), sha };
     const r = await gh(filePath, { method: "PUT", body: JSON.stringify(body) });
-    if (r.ok) { const j = await r.json(); sha = j.content.sha; etag = null; return; }
+    if (r.ok) { const j = await r.json(); sha = j.content.sha; etag = null; return message; }
     if ((r.status === 409 || r.status === 422) && attempt < 3) {
       await new Promise(res => setTimeout(res, 400 + Math.random() * 600));
       await loadData(false);
-      return saveEdit(edit, attempt + 1);
+      return saveOp(op, attempt + 1);
     }
     const e = new Error("save"); e.status = r.status; throw e;
   }
 
   let queue = Promise.resolve();
-  function queueEdit(edit, select) {
-    pending++; setConn();
-    queue = queue.then(() => saveEdit(edit)).then(() => {
-      toast(`Saved ${edit.id}: ${edit.field} → ${edit.value}`);
+  function queueOp(op, onDone) {
+    if (!canWrite) { toast(writeNote || "This board is view only for you."); return Promise.resolve(false); }
+    pending++; setConn(); render();
+    const p = queue.then(() => saveOp(op)).then(msg => {
+      toast("Saved · " + msg);
+      if (onDone) onDone(op);
+      return true;
     }).catch(err => {
       if (err.status === 403 || err.status === 404) { canWrite = false; writeNote = "Can't save. Either your GitHub account only has read access to the tickets repo (ask Ben for Write access), or your token's Contents permission isn't Read and write."; toast(writeNote, 9000); }
       else if (err.status === 401) { toast("Your token expired or was revoked. Connect again."); disconnect(); }
-      else toast(`Couldn't save ${edit.id}. Refresh and try again.`);
-      return loadData(false).catch(() => {});
-    }).finally(() => { pending--; setConn(); render(); });
+      else if (err.status === 410) toast(`${err.id} was deleted by someone else.`);
+      else toast("Couldn't save. Refresh and try again.");
+      return loadData(false).catch(() => {}).then(() => false);
+    }).finally(() => { pending--; setConn(); rerenderKeepingFocus(); });
+    queue = p;
+    return p;
   }
 
   // ---------- connect / disconnect ----------
@@ -427,7 +523,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   function setConn() {
     $("conn").innerHTML = pending ? `<span class="saving">Saving…</span>` : esc(login ? `Connected as @${login}` : "Connected") + (canWrite ? "" : ` · <span class="bad" title="${esc(writeNote)}">view only</span>`);
     $("conn").title = canWrite ? "" : writeNote;
+    $("newBtn").hidden = !canWrite;
   }
+  const isEditing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest(".detail, #newTask") && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
   function showBoard() {
     $("connect").hidden = true; $("board").hidden = false; $("headActions").hidden = false;
     setHelp(!store.get("tp-help-seen"));
@@ -461,7 +559,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (!token || pending) return;
     try {
       const changed = await loadData(conditional);
-      if (changed) rerenderKeepingFocus();
+      if (changed && !isEditing()) rerenderKeepingFocus();
       if (announce) toast(changed ? "Board refreshed" : "Already up to date");
     } catch (e) { if (e.status === 401) { toast("Your token expired or was revoked. Connect again."); disconnect(); } }
   }
@@ -500,7 +598,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (F.ready && (isDone(t) || openBlockers(t).length)) return false;
     if (F.search) {
       const q = F.search.toLowerCase();
-      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier].join(" ").toLowerCase().includes(q)) return false;
+      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier, ...(t.comments || []).map(c => c.text)].join(" ").toLowerCase().includes(q)) return false;
     }
     return true;
   }
@@ -537,14 +635,146 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     } else if (deps.length) flag = `<span class="waits">After ${deps.map(b => `<code>${esc(b)}</code>`).join(", ")}</span>`;
     const extras = (t.stretch ? `<span class="chip flag">Stretch</span>` : "") + (t.later ? `<span class="chip flag">Later</span>` : "");
     const owners = team().includes(t.owner) ? team() : [...team(), t.owner];
-    return `<div class="row${isDone(t) ? " done" : ""}">
+    const nc = (t.comments || []).length;
+    const open = openDetails.has(t.id);
+    const ncChip = nc ? `<span class="chip ncount">${nc} note${nc === 1 ? "" : "s"}</span>` : "";
+    return `<div class="row${isDone(t) ? " done" : ""}${open ? " is-open" : ""}">
       <span class="id">${esc(t.id)}</span>
-      <div class="main"><div class="title">${esc(t.title)}</div>${t.notes ? `<div class="notes">${esc(t.notes)}</div>` : ""}${flag || extras ? `<div class="flags">${extras}${flag}</div>` : ""}</div>
+      <div class="main"><button type="button" class="title" data-act="toggle" data-id="${esc(t.id)}" aria-expanded="${open}">${esc(t.title)}</button>${t.notes && !open ? `<div class="notes">${esc(t.notes)}</div>` : ""}${flag || extras || ncChip ? `<div class="flags">${extras}${ncChip}${flag}</div>` : ""}</div>
       <span class="disc"><i style="background:${DISC_VAR(t.discipline)}"></i>${esc(t.discipline)}</span>
       ${sel(t.id, "owner", owners, t.owner, "owner-" + String(t.owner).replace(/\s+/g, "-"))}
       ${sel(t.id, "status", statuses(), t.status, "st-" + String(t.status).replace(/\s+/g, "-"))}
+      ${open ? detailHtml(t) : ""}
     </div>`;
   }
+
+  // ---------- ticket detail: edit, notes, delete ----------
+  const TIERS = ["", "T1", "T2", "T3", "Reuse", "Mode"];
+  const openDetails = new Set();
+  const drafts = new Map();
+  let armedDelete = null;
+  const dv = (t, f) => { const d = drafts.get(t.id); return d && d[f] !== undefined ? d[f] : t[f]; };
+  const opts = (list, val, label = o => o) => list.map(o => `<option value="${esc(o)}"${o === val ? " selected" : ""}>${esc(label(o))}</option>`).join("");
+  const when = iso => { try { return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } };
+
+  function detailHtml(t) {
+    const dis = canWrite ? "" : " disabled";
+    const bb = dv(t, "blockedBy"); const bbStr = Array.isArray(bb) ? bb.join(", ") : (bb || "");
+    const f = (name, inner, cls = "") => `<label class="${cls}">${name}${inner}</label>`;
+    const comments = (t.comments || []).map(c => `<li><div class="c-meta"><b>${esc(c.by || "someone")}</b> · ${esc(when(c.at))}</div><div class="c-text">${esc(c.text)}</div></li>`).join("");
+    const cd = (drafts.get(t.id) || {}).__comment || "";
+    return `<div class="detail" data-id="${esc(t.id)}">
+      <div class="d-grid">
+        ${f("Title", `<input data-d="title" value="${esc(dv(t, "title"))}" maxlength="160"${dis}>`, "wide")}
+        ${f("Description", `<textarea data-d="notes" rows="3"${dis}>${esc(dv(t, "notes") || "")}</textarea>`, "wide")}
+        ${f("Section", `<select data-d="group"${dis}>${opts(GROUPS, dv(t, "group"))}</select>`)}
+        ${f("Group", `<input data-d="epic" list="epicList" value="${esc(dv(t, "epic"))}"${dis}>`)}
+        ${f("Act", `<select data-d="act"${dis}>${opts(ACTS, dv(t, "act"))}</select>`)}
+        ${f("Discipline", `<select data-d="discipline"${dis}>${opts(DISC, dv(t, "discipline"))}</select>`)}
+        ${f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
+        ${f("Waits on (ticket IDs)", `<input data-d="blockedBy" list="idList" value="${esc(bbStr)}"${dis}>`)}
+        <label class="tog"><input type="checkbox" data-d="stretch"${dv(t, "stretch") ? " checked" : ""}${dis}> Stretch goal</label>
+        <label class="tog"><input type="checkbox" data-d="later"${dv(t, "later") ? " checked" : ""}${dis}> Later</label>
+      </div>
+      ${canWrite ? `<div class="d-actions">
+        <button type="button" class="btn primary" data-act="save" data-id="${esc(t.id)}"${drafts.has(t.id) && Object.keys(drafts.get(t.id)).some(k => k !== "__comment") ? "" : " disabled"}>Save changes</button>
+        <button type="button" class="btn danger" data-act="delete" data-id="${esc(t.id)}">${armedDelete === t.id ? "Click again to delete" : "Delete ticket"}</button>
+      </div>` : ""}
+      <div class="comments">
+        <h4>Notes</h4>
+        ${comments ? `<ul>${comments}</ul>` : `<p class="c-empty">No notes yet.</p>`}
+        ${canWrite ? `<div class="c-new"><textarea data-c rows="2" placeholder="Add a note: progress, a question, a link…">${esc(cd)}</textarea><button type="button" class="btn" data-act="comment" data-id="${esc(t.id)}">Add note</button></div>` : ""}
+      </div>
+    </div>`;
+  }
+
+  function parseIds(str, selfId) {
+    const ids = String(str || "").toUpperCase().split(/[\s,]+/).filter(Boolean).filter(x => x !== selfId);
+    const unknown = ids.filter(x => !byId.has(x));
+    return { ids: [...new Set(ids)], unknown };
+  }
+
+  $("list").addEventListener("input", e => {
+    const el = e.target; const box = el.closest(".detail"); if (!box) return;
+    const id = box.dataset.id; const d = drafts.get(id) || {};
+    if (el.hasAttribute("data-c")) d.__comment = el.value;
+    else if (el.dataset.d) d[el.dataset.d] = el.type === "checkbox" ? el.checked : el.value;
+    drafts.set(id, d);
+    const btn = box.querySelector('[data-act="save"]'); if (btn) btn.disabled = !Object.keys(d).some(k => k !== "__comment");
+  });
+
+  $("list").addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const id = b.dataset.id, act = b.dataset.act;
+    if (act !== "delete" && armedDelete) armedDelete = null;
+    if (act === "toggle") { openDetails.has(id) ? openDetails.delete(id) : openDetails.add(id); rerenderKeepingFocus(); return; }
+    const t = byId.get(id); if (!t) return;
+    if (act === "save") {
+      const d = { ...(drafts.get(id) || {}) }; delete d.__comment;
+      const fields = {};
+      for (const [k, v] of Object.entries(d)) {
+        if (k === "blockedBy") {
+          const { ids, unknown } = parseIds(v, id);
+          if (unknown.length) { toast(`Unknown ticket ID: ${unknown.join(", ")}`, 5000); return; }
+          fields.blockedBy = ids;
+        } else if (k === "title") {
+          if (!String(v).trim()) { toast("A ticket needs a title."); return; }
+          fields.title = String(v).trim();
+        } else if (k === "epic") fields.epic = String(v).trim() || "Unsorted";
+        else fields[k] = v;
+      }
+      if (!Object.keys(fields).length) return;
+      queueOp({ type: "set", id, fields }, () => { const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id); if (keep) drafts.set(id, { __comment: keep }); });
+    }
+    if (act === "comment") {
+      const text = ((drafts.get(id) || {}).__comment || "").trim();
+      if (!text) { toast("Write the note first."); return; }
+      queueOp({ type: "comment", id, comment: { by: login || "someone", at: new Date().toISOString(), text } }, () => { const dd = drafts.get(id); if (dd) { delete dd.__comment; if (!Object.keys(dd).length) drafts.delete(id); } });
+    }
+    if (act === "delete") {
+      if (armedDelete !== id) { armedDelete = id; rerenderKeepingFocus(); return; }
+      armedDelete = null;
+      queueOp({ type: "delete", id }, () => { openDetails.delete(id); drafts.delete(id); });
+    }
+  });
+
+  // ---------- new task ----------
+  function openNew(open) {
+    $("newTask").hidden = !open;
+    $("newBtn").setAttribute("aria-expanded", String(open));
+    if (!open) return;
+    const pick = (v, list, dflt) => (v !== "All" && list.includes(v) ? v : dflt);
+    $("nt-group").innerHTML = opts(GROUPS, pick(F.group, GROUPS, "Foundation"));
+    $("nt-act").innerHTML = opts(ACTS, pick(F.act, ACTS, "—"));
+    $("nt-discipline").innerHTML = opts(DISC, pick(F.disc, DISC, "Design"));
+    $("nt-tier").innerHTML = opts(TIERS, "", o => o || "None");
+    $("nt-owner").innerHTML = opts(team(), pick(F.owner, team(), "Unassigned"));
+    $("nt-status").innerHTML = opts(statuses(), statuses()[0]);
+    $("ntErr").textContent = "";
+    $("newTask").scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => $("nt-title").focus(), 150);
+  }
+  $("newBtn").addEventListener("click", () => openNew($("newTask").hidden));
+  $("ntCancel").addEventListener("click", () => openNew(false));
+  $("ntForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const title = $("nt-title").value.trim();
+    if (!title) { $("ntErr").textContent = "Give the task a title."; return; }
+    const { ids, unknown } = parseIds($("nt-blockedBy").value, null);
+    if (unknown.length) { $("ntErr").textContent = `Unknown ticket ID: ${unknown.join(", ")}`; return; }
+    const ticket = {
+      title, notes: $("nt-notes").value.trim(), group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted",
+      act: $("nt-act").value, discipline: $("nt-discipline").value, tier: $("nt-tier").value, owner: $("nt-owner").value,
+      status: $("nt-status").value, blockedBy: ids, stretch: $("nt-stretch").checked, later: $("nt-later").checked,
+      comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
+    };
+    $("ntSubmit").disabled = true;
+    queueOp({ type: "add", ticket }, op => {
+      $("ntForm").reset(); openNew(false);
+      openEpics.add(ticket.group + "|" + ticket.epic);
+      if (!matches({ ...ticket, id: op.newId })) toast(`Added ${op.newId}. Your current filters hide it.`, 5000);
+    }).finally(() => { $("ntSubmit").disabled = false; });
+  });
 
   function render() {
     if ($("board").hidden) return;
@@ -574,12 +804,16 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       html += `</section>`;
     }
     $("list").innerHTML = html || `<div class="empty">No tickets match these filters.</div>`;
+    $("epicList").innerHTML = [...new Set(tickets().map(t => t.epic).filter(Boolean))].map(x => `<option value="${esc(x)}">`).join("");
+    $("idList").innerHTML = tickets().map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join("");
   }
   function rerenderKeepingFocus() {
     const a = document.activeElement;
-    const keep = a && a.matches && a.matches("select[data-id]") ? a.dataset.id + a.dataset.field : null;
+    let find = null;
+    if (a && a.matches && a.matches("select[data-id]")) { const k = a.dataset.id + "|" + a.dataset.field; find = () => [...document.querySelectorAll("select[data-id]")].find(x => x.dataset.id + "|" + x.dataset.field === k); }
+    else if (a && a.matches && a.matches("[data-act][data-id]")) { const k = a.dataset.act + "|" + a.dataset.id; find = () => [...document.querySelectorAll("[data-act][data-id]")].find(x => x.dataset.act + "|" + x.dataset.id === k); }
     render();
-    if (keep) { const el = [...document.querySelectorAll("select[data-id]")].find(x => x.dataset.id + x.dataset.field === keep); if (el) el.focus(); }
+    if (find) { const el = find(); if (el) el.focus({ preventScroll: true }); }
   }
 
   $("list").addEventListener("toggle", e => {
@@ -589,7 +823,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
   $("list").addEventListener("change", e => {
     const s = e.target; if (!s.matches("select[data-id]")) return;
-    queueEdit({ id: s.dataset.id, field: s.dataset.field, value: s.value }, s);
+    queueOp({ type: "set", id: s.dataset.id, fields: { [s.dataset.field]: s.value } });
   });
 
   // ---------- export ----------
