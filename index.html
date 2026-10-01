@@ -190,7 +190,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     <ol>
       <li>Make sure you've accepted the invite to the <b id="orgName1"></b> organization on GitHub.</li>
       <li>Open <a id="tokenLink" target="_blank" rel="noopener">GitHub → New fine-grained token</a>.</li>
-      <li><b>Token name:</b> <code>Ticket board</code>. <b>Expiration:</b> 1 year.</li>
+      <li><b>Token name:</b> <code>10 Paces ticket board - yourname</code>. <b>Expiration:</b> 1 year.</li>
       <li><b>Resource owner:</b> choose <code id="orgName2"></code>, not your own name.</li>
       <li><b>Repository access:</b> Only select repositories → <code id="repoName"></code>.</li>
       <li><b>Permissions → Repository permissions → Contents:</b> Read and write. Leave everything else as is.</li>
@@ -294,7 +294,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const headers = conditional && etag ? { "If-None-Match": etag } : {};
     const r = await gh(filePath, { headers });
     if (r.status === 304) return false;
-    if (!r.ok) { const e = new Error("load"); e.status = r.status; throw e; }
+    if (!r.ok) {
+      const e = new Error("load"); e.status = r.status;
+      try { e.ghMessage = (await r.json()).message || ""; } catch (x) { e.ghMessage = ""; }
+      throw e;
+    }
     etag = r.headers.get("ETag");
     const j = await r.json();
     sha = j.sha;
@@ -339,7 +343,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (u.ok) login = (await u.json()).login || "";
     try { await loadData(false); }
     catch (e) {
-      if (e.status === 404 || e.status === 403) throw new Error(`This token can't see ${OWNER}/${DATA_REPO}. Check that Resource owner is ${OWNER}, the repository is selected, and the token has been approved.`);
+      const why = e.ghMessage ? ` GitHub says: "${e.ghMessage}" (${e.status}).` : ` (GitHub error ${e.status}.)`;
+      if (e.status === 404 || e.status === 403) throw new Error(`This token can't see ${OWNER}/${DATA_REPO}. Check that Resource owner is ${OWNER}, the repository is selected, Contents is set to Read and write, and the token has been approved.` + why);
       throw new Error("Couldn't reach GitHub. Check your connection and try again.");
     }
     if (remember) store.set(TOKEN_KEY, tok);
