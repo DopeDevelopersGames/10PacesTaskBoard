@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>10 Paces Board Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body { margin: 0; }
+[hidden] { display: none !important; }
+
+/* Layout: a production board — summary of who carries what, a sticky filter rail, then ticket rows grouped section → epic, tier colours matching the FigJam board. */
+:root {
+  --bg: #f3f1ec;
+  --surface: #fbfaf7;
+  --raise: #ffffff;
+  --ink: #1d1c1a;
+  --muted: #6a665e;
+  --line: #dcd7cc;
+  --accent: #2c4e7c;
+  --accent-soft: #e2e8f1;
+  --t1: #e9c43c; --t1-ink: #4d3d00;
+  --t2: #ef9442; --t2-ink: #4c2400;
+  --t3: #d94b3d; --t3-ink: #ffffff;
+  --reuse: #bfb9ad; --reuse-ink: #2c2a26;
+  --mode: #7f6bc9; --mode-ink: #ffffff;
+  --ok: #2f7a4b;
+  --warn: #a8551b;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --d-design: #7b5bc4; --d-code: #2c6fae; --d-art: #c0603a; --d-animation: #b4438a;
+  --d-audio: #2a8a80; --d-narrative: #7a7a2a; --d-ui: #4f5d75;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141413; --surface: #1c1b19; --raise: #24231f; --ink: #ebe7de; --muted: #a39d91; --line: #34322d;
+  --accent: #8fb1e3; --accent-soft: #23303f;
+  --t1: #d4b23a; --t1-ink: #241c00; --t2: #e08a3e; --t2-ink: #241000; --t3: #d0584a; --t3-ink: #fff;
+  --reuse: #5b5850; --reuse-ink: #f0ece4; --mode: #9884de; --mode-ink: #120d24;
+  --ok: #6cc28c; --warn: #e49a5e;
+  --d-design: #a990e6; --d-code: #6fa8dc; --d-art: #e08b68; --d-animation: #dd7cb7;
+  --d-audio: #5cc3b8; --d-narrative: #c2c26a; --d-ui: #9aa8c2;
+  color-scheme: dark;
+}}
+:root[data-theme="dark"] {
+  --bg: #141413; --surface: #1c1b19; --raise: #24231f; --ink: #ebe7de; --muted: #a39d91; --line: #34322d;
+  --accent: #8fb1e3; --accent-soft: #23303f;
+  --t1: #d4b23a; --t1-ink: #241c00; --t2: #e08a3e; --t2-ink: #241000; --t3: #d0584a; --t3-ink: #fff;
+  --reuse: #5b5850; --reuse-ink: #f0ece4; --mode: #9884de; --mode-ink: #120d24;
+  --ok: #6cc28c; --warn: #e49a5e;
+  --d-design: #a990e6; --d-code: #6fa8dc; --d-art: #e08b68; --d-animation: #dd7cb7;
+  --d-audio: #5cc3b8; --d-narrative: #c2c26a; --d-ui: #9aa8c2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 22px; }
+@media (max-width: 560px) { .wrap { padding-inline: 16px; } }
+
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 5vw, 44px); line-height: 0.95; letter-spacing: 0.01em; margin: 0; text-transform: uppercase; text-wrap: balance; }
+h1 small { display: block; font-family: var(--body); font-weight: 500; font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--muted); margin-top: 8px; }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 500 13px var(--body); border: 1px solid var(--line); background: var(--raise); color: var(--ink); padding: 7px 12px; border-radius: 6px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.conn { font: 12px var(--mono); color: var(--muted); }
+.conn.bad { color: var(--warn); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr); gap: 16px; }
+@media (max-width: 860px) { .summary { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel h2 { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.stat b { display: block; font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.warn b { color: var(--warn); }
+.stat.ok b { color: var(--ok); }
+.progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--ok); }
+
+.owners { display: flex; flex-direction: column; gap: 10px; }
+.owner-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; gap: 10px; align-items: center; }
+.owner-row .name { font-weight: 600; font-size: 13px; }
+.owner-row .name.unassigned { color: var(--warn); }
+.owner-row .count { font: 500 13px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.bar { display: flex; height: 14px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.bar i { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+/* filters */
+.filters { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters label { display: inline-flex; flex-direction: column; gap: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+select, input[type=search] { font: 13px var(--body); color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+input[type=search] { width: 200px; }
+.toggle { flex-direction: row !important; align-items: center; gap: 6px !important; font-size: 12px !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--ink) !important; padding-top: 14px; cursor: pointer; }
+.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); padding-top: 14px; }
+@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; padding-top: 0; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
+
+/* list */
+.section { display: flex; flex-direction: column; gap: 10px; }
+.section > h3 { font-family: var(--display); font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 0.02em; margin: 8px 0 0; display: flex; align-items: baseline; gap: 10px; }
+.section > h3 span { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0; text-transform: none; }
+details.epic { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+details.epic > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; }
+details.epic > summary::-webkit-details-marker { display: none; }
+details.epic > summary::before { content: "▸"; color: var(--muted); font-size: 11px; transition: transform .15s; }
+details.epic[open] > summary::before { transform: rotate(90deg); }
+.epic-name { font-weight: 600; font-size: 15px; }
+.epic-meta { font: 12px var(--mono); color: var(--muted); margin-left: auto; display: flex; gap: 12px; align-items: center; }
+.mini { width: 60px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; display: inline-block; }
+.mini i { display: block; height: 100%; background: var(--ok); }
+
+.rows { border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.id { font: 500 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.title { font-weight: 500; }
+.notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.flags { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 11.5px; }
+.blocked { color: var(--warn); }
+.blocked code, .waits code { font-family: var(--mono); font-size: 11px; }
+.waits { color: var(--muted); }
+.ready { color: var(--ok); font-weight: 500; }
+.tagline { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font: 600 10.5px var(--body); letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.tier-T1 { background: var(--t1); color: var(--t1-ink); }
+.tier-T2 { background: var(--t2); color: var(--t2-ink); }
+.tier-T3 { background: var(--t3); color: var(--t3-ink); }
+.tier-Reuse { background: var(--reuse); color: var(--reuse-ink); }
+.tier-Mode { background: var(--mode); color: var(--mode-ink); }
+.chip.flag { background: transparent; border: 1px dashed var(--muted); color: var(--muted); }
+.disc { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.disc i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.row select { width: 100%; }
+.row select.st-Done { color: var(--ok); }
+.row select.st-In-progress { color: var(--accent); font-weight: 600; }
+.row select.owner-Unassigned { color: var(--warn); }
+@media (max-width: 860px) {
+  .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .row .id { grid-column: 1 / -1; }
+  .row .main { grid-column: 1 / -1; }
+  .row .disc { grid-column: 1 / -1; }
+}
+
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 28px; text-align: center; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 6px; font-size: 13px; z-index: 20; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* connect screen + github header bits */
+.connect { max-width: 640px; margin-inline: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.connect h2 { font-family: var(--display); font-weight: 800; font-size: 26px; text-transform: uppercase; margin: 0; }
+.connect p { margin: 0; color: var(--muted); max-width: 62ch; }
+.connect ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+.connect li { padding-left: 4px; }
+.connect li b { color: var(--ink); }
+.connect code { font-family: var(--mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+.connect a { color: var(--accent); }
+.connect .callout { border-left: 3px solid var(--warn); padding: 6px 10px; background: var(--raise); font-size: 13px; color: var(--ink); }
+.connect form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.connect input[type=password] { flex: 1 1 260px; min-width: 0; font: 13px var(--mono); color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 600; }
+.err { color: var(--warn); font-size: 13px; min-height: 1.2em; }
+.remember { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--muted); width: 100%; }
+.saving { color: var(--accent); }
+.guide { max-width: 860px; }
+.guide a:not(.btn) { color: var(--accent); }
+.guide .btn { text-decoration: none; display: inline-block; }
+.intro { display: flex; flex-direction: column; gap: 10px; }
+.intro p { margin: 0; max-width: 68ch; font-size: 15px; }
+.need { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.steps > li { counter-increment: step; position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px 18px 68px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.steps > li::before { content: counter(step); position: absolute; left: 18px; top: 14px; font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; color: var(--accent); }
+.steps h2, .sec { font-family: var(--display); font-weight: 800; font-size: 21px; text-transform: uppercase; letter-spacing: 0.02em; margin: 0; }
+.steps p { margin: 0; max-width: 68ch; }
+.guide code { font-family: var(--mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.check { color: var(--ok); font-size: 13px; }
+.check::before { content: "✓ "; font-weight: 700; }
+.warn { color: var(--warn); font-size: 12.5px; display: block; margin-top: 3px; }
+.warn.block { border-left: 3px solid var(--warn); padding: 6px 10px; background: var(--raise); color: var(--ink); font-size: 13px; margin-top: 0; }
+.note { color: var(--muted); font-size: 12.5px; }
+.fields { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.fields th, .fields td { text-align: left; vertical-align: top; padding: 9px 10px; border-top: 1px solid var(--line); }
+.fields th { width: 34%; font-weight: 600; }
+.use, .trouble { display: flex; flex-direction: column; gap: 12px; }
+.use dl { margin: 0; display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 10px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
+.use dt { font-weight: 600; }
+.use dd { margin: 0; color: var(--ink); }
+.trouble .fields { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.trouble .fields tr:first-child th, .trouble .fields tr:first-child td { border-top: 0; }
+@media (max-width: 640px) {
+  .steps > li { padding: 52px 16px 16px; }
+  .steps > li::before { left: 16px; top: 12px; font-size: 28px; }
+  .fields th, .fields td { display: block; width: 100%; }
+  .fields td { border-top: 0; padding-top: 0; }
+  .use dl { grid-template-columns: minmax(0, 1fr); }
+  .use dd { margin-bottom: 6px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap guide">
+  <header>
+    <h1>Ticket board setup<small>10 Paces, 9 Lives · for Chris, Conan, Yeebles and Ly-Ann · about 5 minutes</small></h1>
+    <div class="head-actions"><a class="btn" href="./">Open the board</a></div>
+  </header>
+
+  <section class="intro">
+    <p>Our tasks live on one shared board at <a href="https://tasks.dopedevelopers.com">tasks.dopedevelopers.com</a>. The tickets themselves are stored in a private GitHub repo, so the board needs a key (a GitHub <b>token</b>) to read and save them. You make the key once, paste it in once, and your browser remembers it.</p>
+    <p class="need"><b>You need:</b> a GitHub account, and the invite Ben sent you to the <b>DopeDevelopersGames</b> organization.</p>
+  </section>
+
+  <ol class="steps">
+    <li>
+      <h2>Accept the organization invite</h2>
+      <p>Open the invite email from GitHub and click <b>Join DopeDevelopersGames</b>. Can't find it? Go to <a href="https://github.com/orgs/DopeDevelopersGames/invitation" target="_blank" rel="noopener">github.com/orgs/DopeDevelopersGames/invitation</a> while signed in.</p>
+      <p class="check">Done when you can see DopeDevelopersGames under your GitHub profile's organizations.</p>
+    </li>
+
+    <li>
+      <h2>Start a new token</h2>
+      <p>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → New fine-grained token</a>. If you'd rather click through: profile picture → <b>Settings</b> → <b>Developer settings</b> (bottom of the left menu) → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</p>
+    </li>
+
+    <li>
+      <h2>Fill in the token</h2>
+      <table class="fields">
+        <tr><th>Token name</th><td><code>10 Paces ticket board - yourname</code></td></tr>
+        <tr><th>Resource owner</th><td><code>DopeDevelopersGames</code> <span class="warn">Not your own name. This is the step people miss.</span></td></tr>
+        <tr><th>Expiration</th><td>Custom → one year from today</td></tr>
+        <tr><th>Repository access</th><td><b>Only select repositories</b> → pick <code>10PacesTaskBoardTickets</code> <span class="note">(the one ending in <b>Tickets</b>)</span></td></tr>
+        <tr><th>Permissions</th><td>Click <b>Add permissions</b> → choose <b>Contents</b> → set to <b>Read and write</b> <span class="warn">Don't skip this. With no permissions the board can't see anything.</span></td></tr>
+      </table>
+      <p>Leave everything else as it is.</p>
+    </li>
+
+    <li>
+      <h2>Generate and copy it</h2>
+      <p>Click <b>Generate token</b>, then the copy button next to the long code starting with <code>github_pat_</code>. GitHub only shows it once. If you lose it before pasting, just make a new one.</p>
+      <p class="warn block">Treat the token like a password. Don't paste it in chat, screenshots or messages, including to Ben.</p>
+    </li>
+
+    <li>
+      <h2>Connect the board</h2>
+      <p>Open <a href="https://tasks.dopedevelopers.com">tasks.dopedevelopers.com</a>, paste the token into the box, keep <b>Remember on this device</b> ticked, and click <b>Connect</b>.</p>
+      <p class="check">Done when you see the tickets and "Connected as @yourname" at the top.</p>
+    </li>
+  </ol>
+
+  <section class="use">
+    <h2 class="sec">Using the board</h2>
+    <dl>
+      <dt>Find your work</dt>
+      <dd>Set <b>Owner</b> to your name. Tick <b>Ready to start only</b> to hide tickets that are still waiting on someone else.</dd>
+      <dt>Update a ticket</dt>
+      <dd>Change its status or owner from the dropdowns on the right. It saves straight away; you'll see "Saving…" then "Saved". Every change is recorded in GitHub under your name.</dd>
+      <dt>Statuses</dt>
+      <dd><b>To do</b> → <b>In progress</b> when you start → <b>Review</b> when it's ready for Ben to look at → <b>Done</b>.</dd>
+      <dt>"Waiting on …"</dt>
+      <dd>The ticket needs another ticket finished first. Once those are Done it shows <b>Ready</b>.</dd>
+      <dt>Tier colours</dt>
+      <dd><span class="chip tier-T1">T1</span> reuses existing mechanics · <span class="chip tier-T2">T2</span> adds a perk or modifier · <span class="chip tier-T3">T3</span> adds a new mechanic · <span class="chip tier-Reuse">Reuse</span> uses existing art.</dd>
+      <dt>Stretch and later</dt>
+      <dd>Hidden by default. Tick <b>Include stretch &amp; later</b> to see them.</dd>
+      <dt>Someone else's changes</dt>
+      <dd>The board checks for updates every 45 seconds while it's open, or click <b>Refresh</b>.</dd>
+    </dl>
+  </section>
+
+  <section class="trouble">
+    <h2 class="sec">If something goes wrong</h2>
+    <table class="fields">
+      <tr><th>"This token can't see DopeDevelopersGames/10PacesTaskBoardTickets"</th><td>Open your token at <a href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener">github.com/settings/personal-access-tokens</a>, click it, then <b>Edit</b>. Check the repository is <code>10PacesTaskBoardTickets</code> and Contents is <b>Read and write</b>. Click <b>Update</b>, then Connect again. If the resource owner is your own name, delete the token and make a new one.</td></tr>
+      <tr><th>"That token isn't valid or has expired"</th><td>Make a new token (steps 2–5).</td></tr>
+      <tr><th>"Can read the board but not save"</th><td>Contents is set to Read-only. Edit the token and change it to <b>Read and write</b>.</td></tr>
+      <tr><th>Using a new computer or browser</th><td>Paste the same token again, or make a new one.</td></tr>
+      <tr><th>Still stuck</th><td>Message Ben with the exact red error text from the board (not the token).</td></tr>
+    </table>
+  </section>
+</div>
+</body>
+</html>
