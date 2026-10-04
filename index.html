@@ -444,15 +444,17 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   }
   function applyOp(d, op) {
     const find = () => { const t = (d.tickets || []).find(x => x.id === op.id); if (!t) throw gone(op.id); return t; };
+    const short = s => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 70 ? s.slice(0, 67) + "…" : s; };
+    const label = t => t.title ? `${t.id} (${short(t.title)})` : t.id;
     if (op.type === "set") {
       const t = find(); Object.assign(t, op.fields);
       const keys = Object.keys(op.fields);
       return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
-        ? `${op.id}: ${keys[0]} → ${op.fields[keys[0]]}` : `${op.id}: edited ${keys.join(", ")}`;
+        ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]]}` : `${label(t)}: edited ${keys.join(", ")}`;
     }
     if (op.type === "comment") {
       const t = find(); t.comments = [...(t.comments || []), op.comment];
-      return `${op.id}: note from ${op.comment.by}`;
+      return `${label(t)}: note from ${op.comment.by}`;
     }
     if (op.type === "tier") {
       const ENEMY_T = ["T1", "T2", "T3"];
@@ -497,18 +499,18 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const i = list.findIndex(c => noteKey(c) === op.key);
       if (i < 0) throw Object.assign(new Error("note gone"), { status: 410, note: true, id: op.id });
       t.comments = list.filter((_, j) => j !== i);
-      return `${op.id}: deleted a note`;
+      return `${label(t)}: deleted a note`;
     }
     if (op.type === "add") {
       const id = nextId(d); op.newId = id;
       d.tickets.push({ ...op.ticket, id });
-      return `Add ${id}: ${op.ticket.title}`;
+      return `Add ${id} (${short(op.ticket.title)})`;
     }
     if (op.type === "delete") {
-      find();
+      const t = find();
       d.tickets = d.tickets.filter(x => x.id !== op.id);
       d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(op.id)) x.blockedBy = x.blockedBy.filter(b => b !== op.id); });
-      return `Delete ${op.id}`;
+      return `Delete ${label(t)}`;
     }
     throw new Error("unknown op");
   }
