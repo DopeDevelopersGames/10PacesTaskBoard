@@ -222,6 +222,10 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .c-del { all: unset; cursor: pointer; font-size: 11.5px; color: var(--muted); }
 .c-del:hover, .c-del:focus-visible { color: var(--warn); text-decoration: underline; }
 .c-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tierbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raise); font-size: 12.5px; color: var(--muted); }
+.tierbar label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 12.5px; }
+.tierbar select { padding: 4px 8px; font-weight: 600; }
+.d-note { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); padding-block: 7px; }
 </style>
 </head>
 <body>
@@ -293,6 +297,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Stretch</b> and <b>Later</b> tickets are hidden until you tick <b>Include stretch &amp; later</b>.</li>
             <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
             <li><b>Click a ticket's title</b> to open it: edit its details, add a note, or delete it.</li>
+            <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
             <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
@@ -449,6 +454,43 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const t = find(); t.comments = [...(t.comments || []), op.comment];
       return `${op.id}: note from ${op.comment.by}`;
     }
+    if (op.type === "tier") {
+      const ENEMY_T = ["T1", "T2", "T3"];
+      const CODE_TITLE = { T2: "perk / modifier hook", T3: "new core action + UI feedback" };
+      const firstStatus = (d.statuses && d.statuses[0]) || "To do";
+      const list = d.tickets.filter(t => t.group === "Enemies" && t.epic === op.epic);
+      if (!list.length) throw gone(op.epic);
+      const notes = [];
+      list.forEach(t => { if (!t.tier || ENEMY_T.includes(t.tier)) t.tier = op.tier; });
+      const des = list.find(t => t.discipline === "Design");
+      const codes = list.filter(t => t.discipline === "Code");
+      if (op.tier === "T1") {
+        for (const c of codes) {
+          if (c.status === firstStatus && !(c.comments || []).length) {
+            d.tickets = d.tickets.filter(x => x !== c);
+            d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(c.id)) x.blockedBy = x.blockedBy.filter(b => b !== c.id); });
+            notes.push(`removed ${c.id}`);
+          } else notes.push(`kept ${c.id}: it's already started or has notes`);
+        }
+      } else {
+        const title = `${op.epic}: ${CODE_TITLE[op.tier]}`;
+        if (!codes.length) {
+          let id = des && /-DES$/.test(des.id) ? des.id.replace(/-DES$/, "-COD") : null;
+          if (!id || d.tickets.some(t => t.id === id)) id = nextId(d);
+          const owner = (d.team || []).includes("Chris") ? "Chris" : "Unassigned";
+          const ticket = { id, title, notes: "", group: "Enemies", epic: op.epic, act: des ? des.act : (list[0].act || "—"), discipline: "Code", tier: op.tier,
+            owner, status: firstStatus, blockedBy: des ? [des.id] : [], stretch: des ? !!des.stretch : false, later: false, comments: [] };
+          const at = des ? d.tickets.indexOf(des) + 1 : d.tickets.length;
+          d.tickets.splice(at, 0, ticket);
+          notes.push(`added ${id}`);
+        } else codes.forEach(c => { if (/: (perk \/ modifier hook|new core action \+ UI feedback)$/.test(c.title)) c.title = title; });
+      }
+      list.filter(t => t.discipline === "Animation").forEach(a => {
+        const base = a.title.replace(/ \+ signature action$/, "");
+        a.title = op.tier === "T3" ? base + " + signature action" : base;
+      });
+      return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
+    }
     if (op.type === "uncomment") {
       const t = find();
       const list = t.comments || [];
@@ -490,7 +532,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (!canWrite) { toast(writeNote || "This board is view only for you."); return Promise.resolve(false); }
     pending++; setConn(); render();
     const p = queue.then(() => saveOp(op)).then(msg => {
-      toast("Saved · " + msg);
+      toast("Saved · " + msg, Math.max(3200, msg.length * 45));
       if (onDone) onDone(op);
       return true;
     }).catch(err => {
@@ -689,7 +731,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         ${f("Group", `<input data-d="epic" list="epicList" value="${esc(dv(t, "epic"))}"${dis}>`)}
         ${f("Act", `<select data-d="act"${dis}>${opts(ACTS, dv(t, "act"))}</select>`)}
         ${f("Discipline", `<select data-d="discipline"${dis}>${opts(DISC, dv(t, "discipline"))}</select>`)}
-        ${f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
+        ${t.group === "Enemies" && enemyTier(t.epic)
+          ? f("Tier", `<span class="d-note">${tierChip(t.tier)} Set for the whole enemy at the top of its group.</span>`)
+          : f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
         ${f("Waits on (ticket IDs)", `<input data-d="blockedBy" list="idList" value="${esc(bbStr)}"${dis}>`)}
         <label class="tog"><input type="checkbox" data-d="stretch"${dv(t, "stretch") ? " checked" : ""}${dis}> Stretch goal</label>
         <label class="tog"><input type="checkbox" data-d="later"${dv(t, "later") ? " checked" : ""}${dis}> Later</label>
@@ -825,7 +869,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         html += `<details class="epic" data-key="${esc(key)}"${open ? " open" : ""}>
           <summary><span class="epic-name">${esc(e.name)}</span>${tiers.map(tierChip).join("")}
           <span class="epic-meta">${acts.join(" · ")}<span>${d}/${all.length}</span><span class="mini"><i style="width:${all.length ? 100 * d / all.length : 0}%"></i></span></span></summary>
-          <div class="rows">${e.items.map(rowHtml).join("")}</div></details>`;
+          <div class="rows">${tierBar(g, e.name)}${e.items.map(rowHtml).join("")}</div></details>`;
       }
       html += `</section>`;
     }
@@ -833,6 +877,21 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("epicList").innerHTML = [...new Set(tickets().map(t => t.epic).filter(Boolean))].map(x => `<option value="${esc(x)}">`).join("");
     $("idList").innerHTML = tickets().map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join("");
   }
+  // ---------- enemy tier ----------
+  const ENEMY_TIERS = ["T1", "T2", "T3"];
+  const enemyTier = epic => {
+    const ts = tickets().filter(t => t.group === "Enemies" && t.epic === epic).map(t => t.tier).filter(Boolean);
+    if (!ts.length || !ts.every(x => ENEMY_TIERS.includes(x))) return null;
+    const count = {}; ts.forEach(x => count[x] = (count[x] || 0) + 1);
+    return Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+  };
+  function tierBar(group, epic) {
+    if (group !== "Enemies") return "";
+    const cur = enemyTier(epic); if (!cur) return "";
+    const what = { T1: "uses existing mechanics only, no code ticket", T2: "adds a perk or modifier, with a code ticket", T3: "adds a new mechanic, with a code ticket and a signature animation" }[cur];
+    return `<div class="tierbar"><label>Enemy tier <select data-tier-epic="${esc(epic)}" aria-label="Tier for ${esc(epic)}"${canWrite ? "" : " disabled"}>${opts(ENEMY_TIERS, cur)}</select></label><span>${esc(what)}. Changing it updates this enemy's tickets.</span></div>`;
+  }
+
   function rerenderKeepingFocus() {
     const a = document.activeElement;
     let find = null;
@@ -848,7 +907,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   }, true);
 
   $("list").addEventListener("change", e => {
-    const s = e.target; if (!s.matches("select[data-id]")) return;
+    const s = e.target;
+    if (s.matches("select[data-tier-epic]")) { queueOp({ type: "tier", epic: s.dataset.tierEpic, tier: s.value }); return; }
+    if (!s.matches("select[data-id]")) return;
     queueOp({ type: "set", id: s.dataset.id, fields: { [s.dataset.field]: s.value } });
   });
 
