@@ -235,6 +235,21 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .sec-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .sec-empty { padding: 14px; font-size: 13px; text-align: left; }
 .head-right { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+/* status colours on rows */
+:root { --st-prog: #2c6fae; --st-review: #b07a12; --st-done: #2f7a4b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --st-prog: #6fa8dc; --st-review: #e0b04a; --st-done: #6cc28c; } }
+:root[data-theme="dark"] { --st-prog: #6fa8dc; --st-review: #e0b04a; --st-done: #6cc28c; }
+.row.st-row-In-progress { box-shadow: inset 4px 0 0 var(--st-prog); background: color-mix(in srgb, var(--st-prog) 9%, transparent); }
+.row.st-row-Review { box-shadow: inset 4px 0 0 var(--st-review); background: color-mix(in srgb, var(--st-review) 11%, transparent); }
+.row.st-row-Done { box-shadow: inset 4px 0 0 var(--st-done); background: color-mix(in srgb, var(--st-done) 8%, transparent); }
+.row.st-row-Done .title, .row.st-row-Done .notes { opacity: 0.75; }
+.row select.st-In-progress { color: var(--st-prog); border-color: var(--st-prog); font-weight: 600; }
+.row select.st-Review { color: var(--st-review); border-color: var(--st-review); font-weight: 600; }
+.row select.st-Done { color: var(--st-done); border-color: var(--st-done); font-weight: 600; }
+.st-key { font-weight: 600; padding: 0 5px; border-radius: 3px; }
+.st-key-prog { color: var(--st-prog); background: color-mix(in srgb, var(--st-prog) 14%, transparent); }
+.st-key-review { color: var(--st-review); background: color-mix(in srgb, var(--st-review) 16%, transparent); }
+.st-key-done { color: var(--st-done); background: color-mix(in srgb, var(--st-done) 14%, transparent); }
 </style>
 <script>
 (() => {
@@ -321,6 +336,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <dt><code>STG-3-ART</code></dt><dd>Ticket ID: what it belongs to, then the discipline.</dd>
             <dt>Prefixes</dt><dd><code>FND</code> foundation · <code>HUB</code> hub · <code>E-</code> enemy · <code>SRV</code> Survive · <code>STG</code> stage</dd>
             <dt>Endings</dt><dd><code>DES</code> design · <code>COD</code> code · <code>ART</code> art · <code>ANI</code> animation · <code>AUD</code> audio · <code>NAR</code> narrative</dd>
+            <dt>Row colour</dt><dd>Shows status: plain is <b>To do</b>, <span class="st-key st-key-prog">blue</span> is <b>In progress</b>, <span class="st-key st-key-review">amber</span> is <b>Review</b>, <span class="st-key st-key-done">green</span> is <b>Done</b>.</dd>
             <dt>Waiting on</dt><dd>Needs those tickets done first. Turns into <b class="ok">Ready</b> once they are.</dd>
             <dt>Tiers</dt><dd><span class="chip tier-T1">T1</span> existing mechanics · <span class="chip tier-T2">T2</span> perk or modifier · <span class="chip tier-T3">T3</span> new mechanic · <span class="chip tier-Reuse">Reuse</span> existing art · <span class="chip tier-Mode">Mode</span> Survive mode</dd>
           </dl>
@@ -824,7 +840,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const nc = (t.comments || []).length;
     const open = openDetails.has(t.id);
     const ncChip = nc ? `<span class="chip ncount">${nc} note${nc === 1 ? "" : "s"}</span>` : "";
-    return `<div class="row${isDone(t) ? " done" : ""}${open ? " is-open" : ""}">
+    return `<div class="row st-row-${String(t.status || "").replace(/[^A-Za-z0-9]+/g, "-")}${isDone(t) ? " done" : ""}${open ? " is-open" : ""}">
       <span class="id">${esc(t.id)}</span>
       <div class="main"><button type="button" class="title" data-act="toggle" data-id="${esc(t.id)}" aria-expanded="${open}">${esc(t.title)}</button>${t.notes && !open ? `<div class="notes">${esc(t.notes)}</div>` : ""}${flag || extras || ncChip ? `<div class="flags">${extras}${ncChip}${flag}</div>` : ""}</div>
       <span class="disc"><i style="background:${DISC_VAR(t.discipline)}"></i>${esc(t.discipline)}</span>
