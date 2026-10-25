@@ -121,7 +121,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 78px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
 .row.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
-.id { font: 500 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.id { font: 500 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
 .title { font-weight: 500; }
 .notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .flags { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 11.5px; }
@@ -369,7 +369,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
             <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or choose <b>Sort → Priority</b> to put P0 work at the top of every group.</li>
-            <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
+            <li><b>+ New task</b> adds a ticket. Type your own ID, like <code>HUB-V1</code>, or leave it blank to get one like <code>TK-001</code>.</li>
+            <li><b>Changing an ID</b>: open the ticket and edit <b>Ticket ID</b>. Tickets that wait on it are updated to the new ID. IDs must be unique.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
             <li><b>Export CSV</b> downloads whatever the current filters show.</li>
@@ -385,6 +386,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <button class="btn" id="ntCancel" type="button">Cancel</button>
       </div>
       <form id="ntForm" class="d-grid">
+        <label>Ticket ID<input id="nt-id" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="e.g. HUB-V1 (blank = auto)"></label>
         <label class="wide">Title<input id="nt-title" required maxlength="160" placeholder="e.g. Boss 3: hit-flash VFX"></label>
         <label class="wide">Description<textarea id="nt-notes" rows="3" placeholder="What needs doing, links, acceptance notes…"></textarea></label>
         <label>Section<select id="nt-group"></select></label>
@@ -544,6 +546,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   // Every change is an operation applied to the latest data. If someone else saved first,
   // the file is reloaded and the same operation is applied again on top of their change.
   const gone = id => Object.assign(new Error("gone"), { status: 410, id });
+  // Ticket IDs are uppercase letters, digits, "-", "_" or "." (no spaces or commas, since "Waits on" lists are split on those).
+  const ID_RE = /^[A-Z0-9][A-Z0-9._-]{0,39}$/;
+  const normId = s => String(s || "").trim().toUpperCase().replace(/\s+/g, "-");
+  const idProblem = id => !id ? "A ticket needs an ID." : ID_RE.test(id) ? "" : `"${id}" isn't a valid ID. Use letters, numbers and dashes, like HUB-V1.`;
+  const idTaken = (d, id, except) => (d.tickets || []).some(t => t !== except && String(t.id).toUpperCase() === id);
   function nextId(d) {
     let max = 0;
     for (const t of d.tickets || []) { const m = /^TK-(\d+)$/.exec(t.id); if (m) max = Math.max(max, +m[1]); }
@@ -553,9 +560,26 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const find = () => { const t = (d.tickets || []).find(x => x.id === op.id); if (!t) throw gone(op.id); return t; };
     const short = s => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 70 ? s.slice(0, 67) + "…" : s; };
     const label = t => t.title ? `${t.id} (${short(t.title)})` : t.id;
+    const userErr = m => Object.assign(new Error(m), { userMsg: m });
     if (op.type === "set") {
-      const t = find(); Object.assign(t, op.fields);
-      const keys = Object.keys(op.fields);
+      const t = find();
+      const fields = { ...op.fields };
+      let renamed = "";
+      if ("id" in fields) {
+        const from = t.id, to = fields.id; delete fields.id;
+        if (to !== from) {
+          const bad = idProblem(to); if (bad) throw userErr(bad);
+          if (idTaken(d, to, t)) throw userErr(`${to} is already used by another ticket.`);
+          t.id = to;
+          d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(from)) x.blockedBy = x.blockedBy.map(b => b === from ? to : b); });
+          op.renamedTo = to;
+          renamed = `${from} → ${to}`;
+        }
+      }
+      Object.assign(t, fields);
+      const keys = Object.keys(fields);
+      if (renamed) return `Change ID ${renamed}` + (keys.length ? `; edited ${keys.join(", ")}` : "");
+      if (!keys.length) return null;
       return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
         ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]] || "none"}` : `${label(t)}: edited ${keys.join(", ")}`;
     }
@@ -601,7 +625,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
     }
     if (op.type === "member") {
-      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const list = [...(d.team || [])];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase()) || n.toLowerCase() === "unassigned";
       if (op.action === "add") {
@@ -631,7 +654,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       }
     }
     if (op.type === "section") {
-      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const used = [...new Set((d.tickets || []).map(t => t.group).filter(Boolean))];
       const list = [...baseSections(d), ...used.filter(g => !baseSections(d).includes(g))];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase());
@@ -670,7 +692,13 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${label(t)}: deleted a note`;
     }
     if (op.type === "add") {
-      const id = nextId(d); op.newId = id;
+      let id;
+      if (op.wantId) {
+        const bad = idProblem(op.wantId); if (bad) throw userErr(bad);
+        if (idTaken(d, op.wantId)) throw userErr(`${op.wantId} is already used by another ticket. Pick a different ID.`);
+        id = op.wantId;
+      } else id = nextId(d);
+      op.newId = id;
       d.tickets.push({ ...op.ticket, id });
       return `Add ${id} (${short(op.ticket.title)})`;
     }
@@ -908,6 +936,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const cd = (drafts.get(t.id) || {}).__comment || "";
     return `<div class="detail" data-id="${esc(t.id)}">
       <div class="d-grid">
+        ${f("Ticket ID", `<input data-d="id" value="${esc(dv(t, "id"))}" maxlength="40" autocapitalize="characters" spellcheck="false"${dis}>`)}
         ${f("Title", `<input data-d="title" value="${esc(dv(t, "title"))}" maxlength="160"${dis}>`, "wide")}
         ${f("Description", `<textarea data-d="notes" rows="3"${dis}>${esc(dv(t, "notes") || "")}</textarea>`, "wide")}
         ${f("Section", `<select data-d="group"${dis}>${opts(sections(), dv(t, "group"))}</select>`)}
@@ -974,11 +1003,22 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         } else if (k === "title") {
           if (!String(v).trim()) { toast("A ticket needs a title."); return; }
           fields.title = String(v).trim();
+        } else if (k === "id") {
+          const nid = normId(v);
+          if (nid === id) continue;
+          const bad = idProblem(nid); if (bad) { toast(bad, 5000); return; }
+          if (idTaken(data, nid, t)) { toast(`${nid} is already used by another ticket.`, 5000); return; }
+          fields.id = nid;
         } else if (k === "epic") fields.epic = String(v).trim() || "Unsorted";
         else fields[k] = v;
       }
       if (!Object.keys(fields).length) return;
-      queueOp({ type: "set", id, fields }, () => { const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id); if (keep) drafts.set(id, { __comment: keep }); });
+      queueOp({ type: "set", id, fields }, op => {
+        const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id);
+        const nid = op.renamedTo || id;
+        if (nid !== id && openDetails.delete(id)) openDetails.add(nid);
+        if (keep) drafts.set(nid, { __comment: keep });
+      });
     }
     if (act === "comment") {
       const text = ((drafts.get(id) || {}).__comment || "").trim();
@@ -1111,7 +1151,12 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     e.preventDefault();
     const title = $("nt-title").value.trim();
     if (!title) { $("ntErr").textContent = "Give the task a title."; return; }
-    const { ids, unknown } = parseIds($("nt-blockedBy").value, null);
+    const wantId = normId($("nt-id").value);
+    if (wantId) {
+      const bad = idProblem(wantId); if (bad) { $("ntErr").textContent = bad; return; }
+      if (idTaken(data, wantId)) { $("ntErr").textContent = `${wantId} is already used by another ticket. Pick a different ID.`; return; }
+    }
+    const { ids, unknown } = parseIds($("nt-blockedBy").value, wantId || null);
     if (unknown.length) { $("ntErr").textContent = `Unknown ticket ID: ${unknown.join(", ")}`; return; }
     const ticket = {
       title, notes: $("nt-notes").value.trim(), group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted",
@@ -1120,7 +1165,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
     };
     $("ntSubmit").disabled = true;
-    queueOp({ type: "add", ticket }, op => {
+    queueOp({ type: "add", ticket, wantId }, op => {
       $("ntForm").reset(); openNew(false);
       openEpics.add(ticket.group + "|" + ticket.epic);
       if (!matches({ ...ticket, id: op.newId })) toast(`Added ${op.newId}. Your current filters hide it.`, 5000);
