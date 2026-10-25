@@ -118,7 +118,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .mini i { display: block; height: 100%; background: var(--ok); }
 
 .rows { border-top: 1px solid var(--line); }
-.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 78px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
 .row.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
 .id { font: 500 12px var(--mono); color: var(--muted); white-space: nowrap; }
@@ -147,7 +147,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .row .id { grid-column: 1 / -1; }
   .row .main { grid-column: 1 / -1; }
-  .row .disc { grid-column: 1 / -1; }
+  .row .disc { grid-column: 1; }
 }
 
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 28px; text-align: center; color: var(--muted); }
@@ -251,6 +251,21 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .st-key-review { color: var(--st-review); background: color-mix(in srgb, var(--st-review) 16%, transparent); }
 .st-key-done { color: var(--st-done); background: color-mix(in srgb, var(--st-done) 14%, transparent); }
 .row.done .title { text-decoration: none; }
+/* priority: P0 highest */
+:root { --p0: #c0392b; --p1: #d9701e; --p2: #b8930f; --p3: #2c6fae; --p4: #6a665e; --p5: #8f8a80; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --p0: #ef6b5b; --p1: #f0954a; --p2: #e0c04a; --p3: #6fa8dc; --p4: #a39d91; --p5: #847f75; } }
+:root[data-theme="dark"] { --p0: #ef6b5b; --p1: #f0954a; --p2: #e0c04a; --p3: #6fa8dc; --p4: #a39d91; --p5: #847f75; }
+.row select.pr-P0 { color: var(--p0); border-color: var(--p0); font-weight: 700; }
+.row select.pr-P1 { color: var(--p1); border-color: var(--p1); font-weight: 700; }
+.row select.pr-P2 { color: var(--p2); border-color: var(--p2); font-weight: 600; }
+.row select.pr-P3 { color: var(--p3); font-weight: 600; }
+.row select.pr-P4 { color: var(--p4); font-weight: 600; }
+.row select.pr-P5 { color: var(--p5); font-weight: 600; }
+.row select.pr-None { color: var(--muted); }
+.pr-key { font-weight: 700; padding: 0 5px; border-radius: 3px; }
+.pr-key-P0 { color: var(--p0); background: color-mix(in srgb, var(--p0) 14%, transparent); }
+.pr-key-P1 { color: var(--p1); background: color-mix(in srgb, var(--p1) 14%, transparent); }
+.pr-key-P2 { color: var(--p2); background: color-mix(in srgb, var(--p2) 16%, transparent); }
 </style>
 <script>
 (() => {
@@ -338,6 +353,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <dt>Prefixes</dt><dd><code>FND</code> foundation · <code>HUB</code> hub · <code>E-</code> enemy · <code>SRV</code> Survive · <code>STG</code> stage</dd>
             <dt>Endings</dt><dd><code>DES</code> design · <code>COD</code> code · <code>ART</code> art · <code>ANI</code> animation · <code>AUD</code> audio · <code>NAR</code> narrative</dd>
             <dt>Row colour</dt><dd>Shows status: plain is <b>To do</b>, <span class="st-key st-key-prog">blue</span> is <b>In progress</b>, <span class="st-key st-key-review">amber</span> is <b>Review</b>, <span class="st-key st-key-done">green</span> is <b>Done</b>.</dd>
+            <dt>Priority</dt><dd><span class="pr-key pr-key-P0">P0</span> is the most urgent, down to <b>P5</b> the least. <b>None</b> means it hasn't been prioritised yet.</dd>
             <dt>Waiting on</dt><dd>Needs those tickets done first. Turns into <b class="ok">Ready</b> once they are.</dd>
             <dt>Tiers</dt><dd><span class="chip tier-T1">T1</span> existing mechanics · <span class="chip tier-T2">T2</span> perk or modifier · <span class="chip tier-T3">T3</span> new mechanic · <span class="chip tier-Reuse">Reuse</span> existing art · <span class="chip tier-Mode">Mode</span> Survive mode</dd>
           </dl>
@@ -352,6 +368,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
+            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or choose <b>Sort → Priority</b> to put P0 work at the top of every group.</li>
             <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
@@ -377,6 +394,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <label>Tier<select id="nt-tier"></select></label>
         <label>Owner<select id="nt-owner"></select></label>
         <label>Status<select id="nt-status"></select></label>
+        <label>Priority<select id="nt-priority"></select></label>
         <label>Waits on (ticket IDs)<input id="nt-blockedBy" list="idList" placeholder="e.g. E-B3-ART, HUB-06"></label>
         <label class="tog"><input type="checkbox" id="nt-stretch"> Stretch goal</label>
         <label class="tog"><input type="checkbox" id="nt-later"> Later</label>
@@ -435,6 +453,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <label>Discipline<select id="fDisc"></select></label>
       <label>Owner<select id="fOwner"></select></label>
       <label>Status<select id="fStatus"></select></label>
+      <label>Priority<select id="fPriority"></select></label>
+      <label>Sort<select id="fSort"><option value="board">Board order</option><option value="priority">Priority (P0 first)</option></select></label>
       <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
       <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
       <span class="shown" id="shown"></span>
@@ -458,6 +478,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const DEFAULT_SECTIONS = ["Foundation", "Hub", "Enemies", "Stages"];
   const ACTS = ["Act 1", "Act 2", "Act 3", "—"];
   const DISC = ["Design", "Code", "Art", "Animation", "Audio", "Narrative", "UI"];
+  // Priority: P0 is the most urgent. Tickets without one ("" or missing) count as None and sort last.
+  const PRIORITIES = ["P0", "P1", "P2", "P3", "P4", "P5"];
+  const NO_PRIORITY = "None";
+  const prio = t => (PRIORITIES.includes(t.priority) ? t.priority : NO_PRIORITY);
+  const prioRank = t => { const i = PRIORITIES.indexOf(t.priority); return i < 0 ? PRIORITIES.length : i; };
   const DISC_VAR = d => `var(--d-${String(d).toLowerCase()})`;
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -532,7 +557,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const t = find(); Object.assign(t, op.fields);
       const keys = Object.keys(op.fields);
       return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
-        ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]]}` : `${label(t)}: edited ${keys.join(", ")}`;
+        ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]] || "none"}` : `${label(t)}: edited ${keys.join(", ")}`;
     }
     if (op.type === "comment") {
       const t = find(); t.comments = [...(t.comments || []), op.comment];
@@ -768,7 +793,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(true); });
 
   // ---------- filters ----------
-  const F = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", ready: false, extra: false };
+  const F = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
   try { Object.assign(F, JSON.parse(store.get("tp-filters") || "{}")); } catch (e) {}
   const saveF = () => store.set("tp-filters", JSON.stringify(F));
   const fill = (el, opts, val) => { el.innerHTML = opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join(""); };
@@ -780,11 +805,15 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (F.owner !== "All" && !team().includes(F.owner)) F.owner = "All";
     fill($("fOwner"), ["All", ...team()], F.owner);
     fill($("fStatus"), ["All", "Open", ...statuses()], F.status);
+    if (F.priority !== "All" && ![...PRIORITIES, NO_PRIORITY].includes(F.priority)) F.priority = "All";
+    fill($("fPriority"), ["All", ...PRIORITIES, NO_PRIORITY], F.priority);
+    if (!["board", "priority"].includes(F.sort)) F.sort = "board";
+    $("fSort").value = F.sort;
     $("fSearch").value = F.search; $("fReady").checked = F.ready; $("fExtra").checked = F.extra;
   }
   const bind = (id, key, prop = "value") => $(id).addEventListener(prop === "checked" ? "change" : (id === "fSearch" ? "input" : "change"), e => { F[key] = e.target[prop]; saveF(); render(); });
   bind("fSearch", "search"); bind("fGroup", "group"); bind("fAct", "act"); bind("fDisc", "disc");
-  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
+  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fSort", "sort"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
 
   const DONE = "Done";
   const isDone = t => t.status === DONE;
@@ -798,10 +827,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (F.owner !== "All" && t.owner !== F.owner) return false;
     if (F.status === "Open" && isDone(t)) return false;
     if (F.status !== "All" && F.status !== "Open" && t.status !== F.status) return false;
+    if (F.priority !== "All" && prio(t) !== F.priority) return false;
     if (F.ready && (isDone(t) || openBlockers(t).length)) return false;
     if (F.search) {
       const q = F.search.toLowerCase();
-      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier, ...(t.comments || []).map(c => c.text)].join(" ").toLowerCase().includes(q)) return false;
+      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier, t.priority, ...(t.comments || []).map(c => c.text)].join(" ").toLowerCase().includes(q)) return false;
     }
     return true;
   }
@@ -829,6 +859,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const sel = (id, field, opts, val, cls) =>
     `<select data-id="${esc(id)}" data-field="${field}" class="${cls}" aria-label="${field} for ${esc(id)}"${canWrite ? "" : " disabled"}>${opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
 
+  const prioSel = t =>
+    `<select data-id="${esc(t.id)}" data-field="priority" class="pr-${prio(t)}" aria-label="priority for ${esc(t.id)}"${canWrite ? "" : " disabled"}>${opts(["", ...PRIORITIES], PRIORITIES.includes(t.priority) ? t.priority : "", o => o || NO_PRIORITY)}</select>`;
+
   function rowHtml(t) {
     const ob = openBlockers(t), deps = t.blockedBy || [];
     let flag = "";
@@ -845,6 +878,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <span class="id">${esc(t.id)}</span>
       <div class="main"><button type="button" class="title" data-act="toggle" data-id="${esc(t.id)}" aria-expanded="${open}">${esc(t.title)}</button>${t.notes && !open ? `<div class="notes">${esc(t.notes)}</div>` : ""}${flag || extras || ncChip ? `<div class="flags">${extras}${ncChip}${flag}</div>` : ""}</div>
       <span class="disc"><i style="background:${DISC_VAR(t.discipline)}"></i>${esc(t.discipline)}</span>
+      ${prioSel(t)}
       ${sel(t.id, "owner", owners, t.owner, "owner-" + String(t.owner).replace(/\s+/g, "-"))}
       ${sel(t.id, "status", statuses(), t.status, "st-" + String(t.status).replace(/\s+/g, "-"))}
       ${open ? detailHtml(t) : ""}
@@ -883,6 +917,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         ${enemyTier(t.epic)
           ? f("Tier", `<span class="d-note">${tierChip(t.tier)} Set for the whole enemy at the top of its group.</span>`)
           : f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
+        ${f("Priority", `<select data-d="priority"${dis}>${opts(["", ...PRIORITIES], PRIORITIES.includes(dv(t, "priority")) ? dv(t, "priority") : "", o => o || NO_PRIORITY)}</select>`)}
         ${f("Waits on (ticket IDs)", `<input data-d="blockedBy" list="idList" value="${esc(bbStr)}"${dis}>`)}
         <label class="tog"><input type="checkbox" data-d="stretch"${dv(t, "stretch") ? " checked" : ""}${dis}> Stretch goal</label>
         <label class="tog"><input type="checkbox" data-d="later"${dv(t, "later") ? " checked" : ""}${dis}> Later</label>
@@ -1065,6 +1100,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("nt-tier").innerHTML = opts(TIERS, "", o => o || "None");
     $("nt-owner").innerHTML = opts(team(), pick(F.owner, team(), "Unassigned"));
     $("nt-status").innerHTML = opts(statuses(), statuses()[0]);
+    $("nt-priority").innerHTML = opts(["", ...PRIORITIES], PRIORITIES.includes(F.priority) ? F.priority : "", o => o || NO_PRIORITY);
     $("ntErr").textContent = "";
     $("newTask").scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => $("nt-title").focus(), 150);
@@ -1080,7 +1116,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const ticket = {
       title, notes: $("nt-notes").value.trim(), group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted",
       act: $("nt-act").value, discipline: $("nt-discipline").value, tier: $("nt-tier").value, owner: $("nt-owner").value,
-      status: $("nt-status").value, blockedBy: ids, stretch: $("nt-stretch").checked, later: $("nt-later").checked,
+      status: $("nt-status").value, priority: $("nt-priority").value, blockedBy: ids, stretch: $("nt-stretch").checked, later: $("nt-later").checked,
       comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
     };
     $("ntSubmit").disabled = true;
@@ -1095,8 +1131,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if ($("board").hidden) return;
     renderSummary();
     const shown = tickets().filter(matches);
+    if (F.sort === "priority") shown.sort((a, b) => prioRank(a) - prioRank(b));
     $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
-    const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
+    const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.priority !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
     let html = "";
     if (sections().join("|") !== lastSections) fillFilters();
     for (const g of sections()) {
@@ -1163,7 +1200,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
   // ---------- export ----------
   $("exportBtn").addEventListener("click", () => {
-    const cols = ["id", "epic", "group", "act", "discipline", "tier", "title", "notes", "owner", "status", "blockedBy", "stretch", "later"];
+    const cols = ["id", "epic", "group", "act", "discipline", "tier", "priority", "title", "notes", "owner", "status", "blockedBy", "stretch", "later"];
     const q = v => `"${String(Array.isArray(v) ? v.join(" ") : v ?? "").replace(/"/g, '""')}"`;
     const csv = [cols.join(","), ...tickets().filter(matches).map(t => cols.map(c => q(t[c])).join(","))].join("\n");
     const a = document.createElement("a");
