@@ -243,6 +243,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     <div class="head-actions" id="headActions" hidden>
       <span class="conn" id="conn"></span>
       <button class="btn primary" id="newBtn" type="button" aria-expanded="false" aria-controls="newTask">+ New task</button>
+      <button class="btn" id="teamBtn" type="button" aria-expanded="false" aria-controls="teamPanel">Team</button>
       <button class="btn" id="sectionsBtn" type="button" aria-expanded="false" aria-controls="sectionsPanel">Sections</button>
       <button class="btn" id="helpBtn" type="button" aria-expanded="false" aria-controls="help">How to use</button>
       <button class="btn" id="refreshBtn" type="button">Refresh</button>
@@ -307,6 +308,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
             <li><b>Click a ticket's title</b> to open it: edit its details, add a note, or delete it.</li>
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
+            <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
             <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
@@ -349,6 +351,18 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <form id="secForm" class="sec-add">
         <input id="secName" maxlength="40" placeholder="New section name, e.g. Marketing" aria-label="New section name">
         <button class="btn primary" type="submit">Add section</button>
+      </form>
+    </section>
+    <section class="newtask" id="teamPanel" hidden aria-labelledby="teamTitle">
+      <div class="help-head">
+        <h2 id="teamTitle">Team</h2>
+        <button class="btn" id="teamClose" type="button">Done</button>
+      </div>
+      <p class="sec-hint">These are the names in the Owner dropdowns. Rename someone and their tickets follow. Removing someone sets their open and finished tickets to Unassigned, so it asks you to confirm.</p>
+      <ul class="sec-list" id="teamList"></ul>
+      <form id="teamForm" class="sec-add">
+        <input id="teamName" maxlength="30" placeholder="New owner's name, e.g. Aimi" aria-label="New owner's name">
+        <button class="btn primary" type="submit">Add owner</button>
       </form>
     </section>
     <datalist id="epicList"></datalist>
@@ -519,6 +533,36 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       });
       return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
     }
+    if (op.type === "member") {
+      const userErr = m => Object.assign(new Error(m), { userMsg: m });
+      const list = [...(d.team || [])];
+      const has = n => list.some(x => x.toLowerCase() === n.toLowerCase()) || n.toLowerCase() === "unassigned";
+      if (op.action === "add") {
+        if (has(op.name)) throw userErr(op.name.toLowerCase() === "unassigned" ? `"Unassigned" is reserved.` : `${op.name} is already on the team.`);
+        d.team = [...list, op.name];
+        return `Add owner ${op.name}`;
+      }
+      if (!list.includes(op.name)) throw userErr(`${op.name} isn't on the team any more.`);
+      if (op.action === "rename") {
+        if (op.to.toLowerCase() !== op.name.toLowerCase() && has(op.to)) throw userErr(`${op.to} is already on the team.`);
+        d.team = list.map(x => x === op.name ? op.to : x);
+        (d.tickets || []).forEach(t => { if (t.owner === op.name) t.owner = op.to; });
+        return `Rename owner ${op.name} → ${op.to}`;
+      }
+      if (op.action === "remove") {
+        let n = 0;
+        (d.tickets || []).forEach(t => { if (t.owner === op.name) { t.owner = "Unassigned"; n++; } });
+        d.team = list.filter(x => x !== op.name);
+        return `Remove owner ${op.name}` + (n ? ` (${n} ticket${n === 1 ? "" : "s"} → Unassigned)` : "");
+      }
+      if (op.action === "move") {
+        const i = list.indexOf(op.name), j = i + op.dir;
+        if (j < 0 || j >= list.length) return null;
+        [list[i], list[j]] = [list[j], list[i]];
+        d.team = list;
+        return `Move owner ${op.name} ${op.dir < 0 ? "up" : "down"}`;
+      }
+    }
     if (op.type === "section") {
       const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const used = [...new Set((d.tickets || []).map(t => t.group).filter(Boolean))];
@@ -638,7 +682,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   function setConn() {
     $("conn").innerHTML = pending ? `<span class="saving">Saving…</span>` : esc(login ? `Connected as @${login}` : "Connected") + (canWrite ? "" : ` · <span class="bad" title="${esc(writeNote)}">view only</span>`);
     $("conn").title = canWrite ? "" : writeNote;
-    $("newBtn").hidden = !canWrite; $("sectionsBtn").hidden = !canWrite;
+    $("newBtn").hidden = !canWrite; $("sectionsBtn").hidden = !canWrite; $("teamBtn").hidden = !canWrite;
   }
   const isEditing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest(".detail, #newTask") && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
   function showBoard() {
@@ -691,6 +735,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     fill($("fGroup"), ["All", ...sections()], F.group); lastSections = sections().join("|");
     fill($("fAct"), ["All", ...ACTS], F.act);
     fill($("fDisc"), ["All", ...DISC], F.disc);
+    if (F.owner !== "All" && !team().includes(F.owner)) F.owner = "All";
     fill($("fOwner"), ["All", ...team()], F.owner);
     fill($("fStatus"), ["All", "Open", ...statuses()], F.status);
     $("fSearch").value = F.search; $("fReady").checked = F.ready; $("fExtra").checked = F.extra;
@@ -868,6 +913,58 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       armedDelete = null;
       queueOp({ type: "delete", id }, () => { openDetails.delete(id); drafts.delete(id); });
     }
+  });
+
+  // ---------- team ----------
+  let armedMember = null;
+  function renderTeam() {
+    const list = data.team || [];
+    $("teamList").innerHTML = list.map((m, i) => {
+      const n = tickets().filter(t => t.owner === m).length;
+      const open = tickets().filter(t => t.owner === m && !isDone(t)).length;
+      return `<li data-member="${esc(m)}">
+        <input value="${esc(m)}" maxlength="30" aria-label="Rename ${esc(m)}" data-member-name>
+        <span class="sec-count">${open} open · ${n} total</span>
+        <button type="button" class="btn" data-member-act="up"${i === 0 ? " disabled" : ""} aria-label="Move ${esc(m)} up">↑</button>
+        <button type="button" class="btn" data-member-act="down"${i === list.length - 1 ? " disabled" : ""} aria-label="Move ${esc(m)} down">↓</button>
+        <button type="button" class="btn" data-member-act="rename">Rename</button>
+        <button type="button" class="btn danger" data-member-act="remove">${armedMember === m ? (n ? `Unassign ${n} & remove` : "Click again to remove") : "Remove"}</button>
+      </li>`;
+    }).join("");
+  }
+  function openTeam(open) {
+    $("teamPanel").hidden = !open;
+    $("teamBtn").setAttribute("aria-expanded", String(open));
+    if (open) { armedMember = null; renderTeam(); $("teamPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  }
+  const afterTeamChange = () => { renderTeam(); fillFilters(); };
+  $("teamBtn").addEventListener("click", () => openTeam($("teamPanel").hidden));
+  $("teamClose").addEventListener("click", () => openTeam(false));
+  $("teamForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("teamName").value.trim().replace(/\s+/g, " ");
+    if (!name) { toast("Type the new owner's name."); return; }
+    queueOp({ type: "member", action: "add", name }, () => { $("teamName").value = ""; afterTeamChange(); });
+  });
+  $("teamList").addEventListener("click", e => {
+    const btn = e.target.closest("[data-member-act]"); if (!btn) return;
+    const li = btn.closest("li"); const name = li.dataset.member; const act = btn.dataset.memberAct;
+    if (act !== "remove") armedMember = null;
+    if (act === "rename") {
+      const to = li.querySelector("[data-member-name]").value.trim().replace(/\s+/g, " ");
+      if (!to) { toast("An owner needs a name."); return; }
+      if (to === name) return;
+      queueOp({ type: "member", action: "rename", name, to }, () => { if (F.owner === name) { F.owner = to; saveF(); } afterTeamChange(); });
+    }
+    if (act === "remove") {
+      if (armedMember !== name) { armedMember = name; renderTeam(); return; }
+      armedMember = null;
+      queueOp({ type: "member", action: "remove", name }, () => { if (F.owner === name) { F.owner = "All"; saveF(); } afterTeamChange(); });
+    }
+    if (act === "up" || act === "down") queueOp({ type: "member", action: "move", name, dir: act === "up" ? -1 : 1 }, afterTeamChange);
+  });
+  $("teamList").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.matches("[data-member-name]")) { e.preventDefault(); e.target.closest("li").querySelector('[data-member-act="rename"]').click(); }
   });
 
   // ---------- sections ----------
