@@ -225,6 +225,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .tierbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raise); font-size: 12.5px; color: var(--muted); }
 .tierbar label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 12.5px; }
 .tierbar select { padding: 4px 8px; font-weight: 600; }
+.d-hint { text-transform: none; letter-spacing: 0; font-size: 11.5px; color: var(--muted); }
 .d-note { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); padding-block: 7px; }
 /* sections panel */
 .sec-hint { margin: 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
@@ -369,7 +370,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
             <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or choose <b>Sort → Priority</b> to put P0 work at the top of every group.</li>
-            <li><b>+ New task</b> adds a ticket. Type your own ID, like <code>HUB-V1</code>, or leave it blank to get one like <code>TK-001</code>.</li>
+            <li><b>+ New task</b> adds a ticket. Its ID is filled in for you from the section, group and discipline (e.g. <code>FND-22-DES</code>, <code>E-B1-AUD</code>). Type over it to use your own, like <code>HUB-V1</code>.</li>
             <li><b>Changing an ID</b>: open the ticket and edit <b>Ticket ID</b>. Tickets that wait on it are updated to the new ID. IDs must be unique.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
@@ -386,7 +387,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <button class="btn" id="ntCancel" type="button">Cancel</button>
       </div>
       <form id="ntForm" class="d-grid">
-        <label>Ticket ID<input id="nt-id" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="e.g. HUB-V1 (blank = auto)"></label>
+        <label>Ticket ID<input id="nt-id" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="e.g. HUB-V1" aria-describedby="nt-idHint"><span class="d-hint" id="nt-idHint"></span></label>
         <label class="wide">Title<input id="nt-title" required maxlength="160" placeholder="e.g. Boss 3: hit-flash VFX"></label>
         <label class="wide">Description<textarea id="nt-notes" rows="3" placeholder="What needs doing, links, acceptance notes…"></textarea></label>
         <label>Section<select id="nt-group"></select></label>
@@ -551,6 +552,44 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const normId = s => String(s || "").trim().toUpperCase().replace(/\s+/g, "-");
   const idProblem = id => !id ? "A ticket needs an ID." : ID_RE.test(id) ? "" : `"${id}" isn't a valid ID. Use letters, numbers and dashes, like HUB-V1.`;
   const idTaken = (d, id, except) => (d.tickets || []).some(t => t !== except && String(t.id).toUpperCase() === id);
+  // Suggested IDs follow the board's labelling: what it belongs to, then the discipline (STG-3-ART, E-B1-COD).
+  const SECTION_CODE = { Foundation: "FND", Hub: "HUB", Enemies: "E", Tooling: "TOOL", Stages: "STG", Marketing: "MKT", Production: "PROD" };
+  const DISC_CODE = { Design: "DES", Code: "COD", Art: "ART", Animation: "ANI", Audio: "AUD", Narrative: "NAR", UI: "UI" };
+  const DISC_END = new RegExp(`^(.+)-(${Object.values(DISC_CODE).join("|")})$`);
+  const mostCommon = list => { const c = {}; list.forEach(x => c[x] = (c[x] || 0) + 1); return Object.keys(c).sort((a, b) => c[b] - c[a])[0]; };
+  function sectionCode(d, group) {
+    if (SECTION_CODE[group]) return SECTION_CODE[group];
+    const used = (d.tickets || []).filter(t => t.group === group && !/^TK-/.test(t.id)).map(t => String(t.id).split("-")[0]);
+    if (used.length) return mostCommon(used);
+    const words = String(group || "").toUpperCase().replace(/[^A-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+    return (words.length > 1 ? words.map(w => w[0]).join("") : (words[0] || "TK").slice(0, 3)) || "TK";
+  }
+  function suggestId(d, t) {
+    const disc = DISC_CODE[t.discipline] || String(t.discipline || "").toUpperCase().slice(0, 3);
+    const mates = (d.tickets || []).filter(x => x.epic === t.epic && x.group === t.group && !/^TK-/.test(x.id)).map(x => String(x.id));
+    // Same group already has IDs like E-B1-ART: reuse that stem with this discipline.
+    const stems = mates.map(id => (DISC_END.exec(id) || [])[1]).filter(Boolean);
+    let base;
+    if (stems.length) base = `${mostCommon(stems)}-${disc}`;
+    else {
+      const numbered = mates.map(id => (/^([A-Z]+)-\d+/.exec(id) || [])[1]).filter(Boolean);
+      const pre = numbered.length ? mostCommon(numbered) : sectionCode(d, t.group);
+      // A new group in a section that names tickets per group (Enemies, Stages): short code from the group name, Boss 9 → B9.
+      const inSec = (d.tickets || []).filter(x => x.group === t.group && !/^TK-/.test(x.id));
+      if (!numbered.length && inSec.length && inSec.filter(x => DISC_END.test(x.id)).length * 2 > inSec.length && t.epic && t.epic !== "Unsorted") {
+        const words = String(t.epic).toUpperCase().replace(/\(.*?\)/g, " ").replace(/[^A-Z0-9 ]/g, " ").split(/\s+/).filter(Boolean).filter((w, i) => !(i === 0 && pre === "STG" && w === "STAGE"));
+        const stem = words.map(w => /^\d+$/.test(w) ? w : w[0]).join("").slice(0, 8);
+        if (stem) { base = `${pre}-${stem}-${disc}`; let id = base; for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`; return id; }
+      }
+      const re = new RegExp(`^${pre}-(\\d+)(?:-|$)`);
+      let max = 0;
+      for (const x of d.tickets || []) { const m = re.exec(String(x.id)); if (m) max = Math.max(max, +m[1]); }
+      base = `${pre}-${String(max + 1).padStart(2, "0")}-${disc}`;
+    }
+    let id = base;
+    for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`;
+    return id;
+  }
   function nextId(d) {
     let max = 0;
     for (const t of d.tickets || []) { const m = /^TK-(\d+)$/.exec(t.id); if (m) max = Math.max(max, +m[1]); }
@@ -695,8 +734,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       let id;
       if (op.wantId) {
         const bad = idProblem(op.wantId); if (bad) throw userErr(bad);
-        if (idTaken(d, op.wantId)) throw userErr(`${op.wantId} is already used by another ticket. Pick a different ID.`);
-        id = op.wantId;
+        if (!idTaken(d, op.wantId)) id = op.wantId;
+        else if (op.suggested) id = suggestId(d, op.ticket);
+        else throw userErr(`${op.wantId} is already used by another ticket. Pick a different ID.`);
       } else id = nextId(d);
       op.newId = id;
       d.tickets.push({ ...op.ticket, id });
@@ -1142,19 +1182,31 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("nt-status").innerHTML = opts(statuses(), statuses()[0]);
     $("nt-priority").innerHTML = opts(["", ...PRIORITIES], PRIORITIES.includes(F.priority) ? F.priority : "", o => o || NO_PRIORITY);
     $("ntErr").textContent = "";
+    ntIdTyped = false; suggestNewId();
     $("newTask").scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => $("nt-title").focus(), 150);
   }
+  // The ID box follows section, group and discipline until someone types their own ID; clearing it switches suggestions back on.
+  let ntIdTyped = false, ntSuggested = "";
+  function suggestNewId() {
+    ntSuggested = suggestId(data, { group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted", discipline: $("nt-discipline").value });
+    if (!ntIdTyped) $("nt-id").value = ntSuggested;
+    $("nt-idHint").textContent = ntIdTyped ? `Suggested: ${ntSuggested}` : "Suggested from section, group and discipline. Type to change it.";
+  }
+  $("nt-id").addEventListener("input", () => { ntIdTyped = !!$("nt-id").value.trim(); suggestNewId(); });
+  ["nt-group", "nt-discipline"].forEach(id => $(id).addEventListener("change", suggestNewId));
+  $("nt-epic").addEventListener("input", suggestNewId);
   $("newBtn").addEventListener("click", () => openNew($("newTask").hidden));
   $("ntCancel").addEventListener("click", () => openNew(false));
   $("ntForm").addEventListener("submit", e => {
     e.preventDefault();
     const title = $("nt-title").value.trim();
     if (!title) { $("ntErr").textContent = "Give the task a title."; return; }
-    const wantId = normId($("nt-id").value);
+    const wantId = normId($("nt-id").value) || ntSuggested;
+    const suggested = !ntIdTyped;
     if (wantId) {
       const bad = idProblem(wantId); if (bad) { $("ntErr").textContent = bad; return; }
-      if (idTaken(data, wantId)) { $("ntErr").textContent = `${wantId} is already used by another ticket. Pick a different ID.`; return; }
+      if (idTaken(data, wantId) && !suggested) { $("ntErr").textContent = `${wantId} is already used by another ticket. Pick a different ID.`; return; }
     }
     const { ids, unknown } = parseIds($("nt-blockedBy").value, wantId || null);
     if (unknown.length) { $("ntErr").textContent = `Unknown ticket ID: ${unknown.join(", ")}`; return; }
@@ -1165,7 +1217,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
     };
     $("ntSubmit").disabled = true;
-    queueOp({ type: "add", ticket, wantId }, op => {
+    queueOp({ type: "add", ticket, wantId, suggested }, op => {
       $("ntForm").reset(); openNew(false);
       openEpics.add(ticket.group + "|" + ticket.epic);
       if (!matches({ ...ticket, id: op.newId })) toast(`Added ${op.newId}. Your current filters hide it.`, 5000);
