@@ -100,8 +100,11 @@ h1 small { display: block; font-family: var(--body); font-weight: 500; font-size
 select, input[type=search] { font: 13px var(--body); color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
 input[type=search] { width: 200px; }
 .toggle { flex-direction: row !important; align-items: center; gap: 6px !important; font-size: 12px !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--ink) !important; padding-top: 14px; cursor: pointer; }
-.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); padding-top: 14px; }
-@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; padding-top: 0; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
+.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
+.filters .btn.clear { align-self: flex-end; padding-block: 6px; }
+.f-row2 { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
+.f-row2 .toggle { padding-top: 0; }
+@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
 
 /* list */
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -121,7 +124,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 78px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
 .row.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
-.id { font: 500 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.id { font: 500 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
 .title { font-weight: 500; }
 .notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .flags { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 11.5px; }
@@ -225,6 +228,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .tierbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raise); font-size: 12.5px; color: var(--muted); }
 .tierbar label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 12.5px; }
 .tierbar select { padding: 4px 8px; font-weight: 600; }
+.d-hint { text-transform: none; letter-spacing: 0; font-size: 11.5px; color: var(--muted); }
 .d-note { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); padding-block: 7px; }
 /* sections panel */
 .sec-hint { margin: 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
@@ -340,7 +344,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
           <h3>Your day-to-day</h3>
           <ol>
             <li>Set <b>Owner</b> to your name.</li>
-            <li>Tick <b>Ready to start only</b> to see what you can pick up now.</li>
+            <li>Tick <b>Ready to start only</b> (under the filters) to see what you can pick up now. <b>Clear all filters</b> takes you back to the full board.</li>
             <li>When you start a ticket, set it to <b>In progress</b>.</li>
             <li>When it's ready for a look, set it to <b>Review</b>. Ben moves it to <b>Done</b>, or you do if it needs no review.</li>
           </ol>
@@ -368,8 +372,9 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
-            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or choose <b>Sort → Priority</b> to put P0 work at the top of every group.</li>
-            <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
+            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or tick <b>Arrange by priority</b> to put P0 work at the top of every group.</li>
+            <li><b>+ New task</b> adds a ticket. Its ID is filled in for you from the section, group and discipline (e.g. <code>FND-22-DES</code>, <code>E-B1-AUD</code>). Type over it to use your own, like <code>HUB-V1</code>.</li>
+            <li><b>Changing an ID</b>: open the ticket and edit <b>Ticket ID</b>. Tickets that wait on it are updated to the new ID. IDs must be unique.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
             <li><b>Export CSV</b> downloads whatever the current filters show.</li>
@@ -385,6 +390,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <button class="btn" id="ntCancel" type="button">Cancel</button>
       </div>
       <form id="ntForm" class="d-grid">
+        <label>Ticket ID<input id="nt-id" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="e.g. HUB-V1" aria-describedby="nt-idHint"><span class="d-hint" id="nt-idHint"></span></label>
         <label class="wide">Title<input id="nt-title" required maxlength="160" placeholder="e.g. Boss 3: hit-flash VFX"></label>
         <label class="wide">Description<textarea id="nt-notes" rows="3" placeholder="What needs doing, links, acceptance notes…"></textarea></label>
         <label>Section<select id="nt-group"></select></label>
@@ -454,10 +460,13 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <label>Owner<select id="fOwner"></select></label>
       <label>Status<select id="fStatus"></select></label>
       <label>Priority<select id="fPriority"></select></label>
-      <label>Sort<select id="fSort"><option value="board">Board order</option><option value="priority">Priority (P0 first)</option></select></label>
-      <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
-      <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
-      <span class="shown" id="shown"></span>
+      <button class="btn clear" id="fClear" type="button">Clear all filters</button>
+      <div class="f-row2">
+        <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
+        <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
+        <label class="toggle"><input type="checkbox" id="fSortPrio"> Arrange by priority</label>
+        <span class="shown" id="shown"></span>
+      </div>
     </div>
 
     <main id="list" style="margin-top:16px; display:flex; flex-direction:column; gap:10px"></main>
@@ -544,6 +553,49 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   // Every change is an operation applied to the latest data. If someone else saved first,
   // the file is reloaded and the same operation is applied again on top of their change.
   const gone = id => Object.assign(new Error("gone"), { status: 410, id });
+  // Ticket IDs are uppercase letters, digits, "-", "_" or "." (no spaces or commas, since "Waits on" lists are split on those).
+  const ID_RE = /^[A-Z0-9][A-Z0-9._-]{0,39}$/;
+  const normId = s => String(s || "").trim().toUpperCase().replace(/\s+/g, "-");
+  const idProblem = id => !id ? "A ticket needs an ID." : ID_RE.test(id) ? "" : `"${id}" isn't a valid ID. Use letters, numbers and dashes, like HUB-V1.`;
+  const idTaken = (d, id, except) => (d.tickets || []).some(t => t !== except && String(t.id).toUpperCase() === id);
+  // Suggested IDs follow the board's labelling: what it belongs to, then the discipline (STG-3-ART, E-B1-COD).
+  const SECTION_CODE = { Foundation: "FND", Hub: "HUB", Enemies: "E", Tooling: "TOOL", Stages: "STG", Marketing: "MKT", Production: "PROD" };
+  const DISC_CODE = { Design: "DES", Code: "COD", Art: "ART", Animation: "ANI", Audio: "AUD", Narrative: "NAR", UI: "UI" };
+  const DISC_END = new RegExp(`^(.+)-(${Object.values(DISC_CODE).join("|")})$`);
+  const mostCommon = list => { const c = {}; list.forEach(x => c[x] = (c[x] || 0) + 1); return Object.keys(c).sort((a, b) => c[b] - c[a])[0]; };
+  function sectionCode(d, group) {
+    if (SECTION_CODE[group]) return SECTION_CODE[group];
+    const used = (d.tickets || []).filter(t => t.group === group && !/^TK-/.test(t.id)).map(t => String(t.id).split("-")[0]);
+    if (used.length) return mostCommon(used);
+    const words = String(group || "").toUpperCase().replace(/[^A-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+    return (words.length > 1 ? words.map(w => w[0]).join("") : (words[0] || "TK").slice(0, 3)) || "TK";
+  }
+  function suggestId(d, t) {
+    const disc = DISC_CODE[t.discipline] || String(t.discipline || "").toUpperCase().slice(0, 3);
+    const mates = (d.tickets || []).filter(x => x.epic === t.epic && x.group === t.group && !/^TK-/.test(x.id)).map(x => String(x.id));
+    // Same group already has IDs like E-B1-ART: reuse that stem with this discipline.
+    const stems = mates.map(id => (DISC_END.exec(id) || [])[1]).filter(Boolean);
+    let base;
+    if (stems.length) base = `${mostCommon(stems)}-${disc}`;
+    else {
+      const numbered = mates.map(id => (/^([A-Z]+)-\d+/.exec(id) || [])[1]).filter(Boolean);
+      const pre = numbered.length ? mostCommon(numbered) : sectionCode(d, t.group);
+      // A new group in a section that names tickets per group (Enemies, Stages): short code from the group name, Boss 9 → B9.
+      const inSec = (d.tickets || []).filter(x => x.group === t.group && !/^TK-/.test(x.id));
+      if (!numbered.length && inSec.length && inSec.filter(x => DISC_END.test(x.id)).length * 2 > inSec.length && t.epic && t.epic !== "Unsorted") {
+        const words = String(t.epic).toUpperCase().replace(/\(.*?\)/g, " ").replace(/[^A-Z0-9 ]/g, " ").split(/\s+/).filter(Boolean).filter((w, i) => !(i === 0 && pre === "STG" && w === "STAGE"));
+        const stem = words.map(w => /^\d+$/.test(w) ? w : w[0]).join("").slice(0, 8);
+        if (stem) { base = `${pre}-${stem}-${disc}`; let id = base; for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`; return id; }
+      }
+      const re = new RegExp(`^${pre}-(\\d+)(?:-|$)`);
+      let max = 0;
+      for (const x of d.tickets || []) { const m = re.exec(String(x.id)); if (m) max = Math.max(max, +m[1]); }
+      base = `${pre}-${String(max + 1).padStart(2, "0")}-${disc}`;
+    }
+    let id = base;
+    for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`;
+    return id;
+  }
   function nextId(d) {
     let max = 0;
     for (const t of d.tickets || []) { const m = /^TK-(\d+)$/.exec(t.id); if (m) max = Math.max(max, +m[1]); }
@@ -553,9 +605,26 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const find = () => { const t = (d.tickets || []).find(x => x.id === op.id); if (!t) throw gone(op.id); return t; };
     const short = s => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 70 ? s.slice(0, 67) + "…" : s; };
     const label = t => t.title ? `${t.id} (${short(t.title)})` : t.id;
+    const userErr = m => Object.assign(new Error(m), { userMsg: m });
     if (op.type === "set") {
-      const t = find(); Object.assign(t, op.fields);
-      const keys = Object.keys(op.fields);
+      const t = find();
+      const fields = { ...op.fields };
+      let renamed = "";
+      if ("id" in fields) {
+        const from = t.id, to = fields.id; delete fields.id;
+        if (to !== from) {
+          const bad = idProblem(to); if (bad) throw userErr(bad);
+          if (idTaken(d, to, t)) throw userErr(`${to} is already used by another ticket.`);
+          t.id = to;
+          d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(from)) x.blockedBy = x.blockedBy.map(b => b === from ? to : b); });
+          op.renamedTo = to;
+          renamed = `${from} → ${to}`;
+        }
+      }
+      Object.assign(t, fields);
+      const keys = Object.keys(fields);
+      if (renamed) return `Change ID ${renamed}` + (keys.length ? `; edited ${keys.join(", ")}` : "");
+      if (!keys.length) return null;
       return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
         ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]] || "none"}` : `${label(t)}: edited ${keys.join(", ")}`;
     }
@@ -601,7 +670,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
     }
     if (op.type === "member") {
-      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const list = [...(d.team || [])];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase()) || n.toLowerCase() === "unassigned";
       if (op.action === "add") {
@@ -631,7 +699,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       }
     }
     if (op.type === "section") {
-      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const used = [...new Set((d.tickets || []).map(t => t.group).filter(Boolean))];
       const list = [...baseSections(d), ...used.filter(g => !baseSections(d).includes(g))];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase());
@@ -670,7 +737,14 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${label(t)}: deleted a note`;
     }
     if (op.type === "add") {
-      const id = nextId(d); op.newId = id;
+      let id;
+      if (op.wantId) {
+        const bad = idProblem(op.wantId); if (bad) throw userErr(bad);
+        if (!idTaken(d, op.wantId)) id = op.wantId;
+        else if (op.suggested) id = suggestId(d, op.ticket);
+        else throw userErr(`${op.wantId} is already used by another ticket. Pick a different ID.`);
+      } else id = nextId(d);
+      op.newId = id;
       d.tickets.push({ ...op.ticket, id });
       return `Add ${id} (${short(op.ticket.title)})`;
     }
@@ -793,7 +867,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(true); });
 
   // ---------- filters ----------
-  const F = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
+  const F_DEFAULT = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
+  const F = { ...F_DEFAULT };
   try { Object.assign(F, JSON.parse(store.get("tp-filters") || "{}")); } catch (e) {}
   const saveF = () => store.set("tp-filters", JSON.stringify(F));
   const fill = (el, opts, val) => { el.innerHTML = opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join(""); };
@@ -808,12 +883,16 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (F.priority !== "All" && ![...PRIORITIES, NO_PRIORITY].includes(F.priority)) F.priority = "All";
     fill($("fPriority"), ["All", ...PRIORITIES, NO_PRIORITY], F.priority);
     if (!["board", "priority"].includes(F.sort)) F.sort = "board";
-    $("fSort").value = F.sort;
+    $("fSortPrio").checked = F.sort === "priority";
     $("fSearch").value = F.search; $("fReady").checked = F.ready; $("fExtra").checked = F.extra;
   }
   const bind = (id, key, prop = "value") => $(id).addEventListener(prop === "checked" ? "change" : (id === "fSearch" ? "input" : "change"), e => { F[key] = e.target[prop]; saveF(); render(); });
   bind("fSearch", "search"); bind("fGroup", "group"); bind("fAct", "act"); bind("fDisc", "disc");
-  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fSort", "sort"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
+  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
+
+  $("fSortPrio").addEventListener("change", e => { F.sort = e.target.checked ? "priority" : "board"; saveF(); render(); });
+  // Back to the board's default view: every filter cleared, open tickets only, board order.
+  $("fClear").addEventListener("click", () => { Object.assign(F, F_DEFAULT); saveF(); fillFilters(); render(); });
 
   const DONE = "Done";
   const isDone = t => t.status === DONE;
@@ -908,6 +987,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const cd = (drafts.get(t.id) || {}).__comment || "";
     return `<div class="detail" data-id="${esc(t.id)}">
       <div class="d-grid">
+        ${f("Ticket ID", `<input data-d="id" value="${esc(dv(t, "id"))}" maxlength="40" autocapitalize="characters" spellcheck="false"${dis}>`)}
         ${f("Title", `<input data-d="title" value="${esc(dv(t, "title"))}" maxlength="160"${dis}>`, "wide")}
         ${f("Description", `<textarea data-d="notes" rows="3"${dis}>${esc(dv(t, "notes") || "")}</textarea>`, "wide")}
         ${f("Section", `<select data-d="group"${dis}>${opts(sections(), dv(t, "group"))}</select>`)}
@@ -974,11 +1054,22 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         } else if (k === "title") {
           if (!String(v).trim()) { toast("A ticket needs a title."); return; }
           fields.title = String(v).trim();
+        } else if (k === "id") {
+          const nid = normId(v);
+          if (nid === id) continue;
+          const bad = idProblem(nid); if (bad) { toast(bad, 5000); return; }
+          if (idTaken(data, nid, t)) { toast(`${nid} is already used by another ticket.`, 5000); return; }
+          fields.id = nid;
         } else if (k === "epic") fields.epic = String(v).trim() || "Unsorted";
         else fields[k] = v;
       }
       if (!Object.keys(fields).length) return;
-      queueOp({ type: "set", id, fields }, () => { const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id); if (keep) drafts.set(id, { __comment: keep }); });
+      queueOp({ type: "set", id, fields }, op => {
+        const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id);
+        const nid = op.renamedTo || id;
+        if (nid !== id && openDetails.delete(id)) openDetails.add(nid);
+        if (keep) drafts.set(nid, { __comment: keep });
+      });
     }
     if (act === "comment") {
       const text = ((drafts.get(id) || {}).__comment || "").trim();
@@ -1102,16 +1193,33 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("nt-status").innerHTML = opts(statuses(), statuses()[0]);
     $("nt-priority").innerHTML = opts(["", ...PRIORITIES], PRIORITIES.includes(F.priority) ? F.priority : "", o => o || NO_PRIORITY);
     $("ntErr").textContent = "";
+    ntIdTyped = false; suggestNewId();
     $("newTask").scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => $("nt-title").focus(), 150);
   }
+  // The ID box follows section, group and discipline until someone types their own ID; clearing it switches suggestions back on.
+  let ntIdTyped = false, ntSuggested = "";
+  function suggestNewId() {
+    ntSuggested = suggestId(data, { group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted", discipline: $("nt-discipline").value });
+    if (!ntIdTyped) $("nt-id").value = ntSuggested;
+    $("nt-idHint").textContent = ntIdTyped ? `Suggested: ${ntSuggested}` : "Suggested from section, group and discipline. Type to change it.";
+  }
+  $("nt-id").addEventListener("input", () => { ntIdTyped = !!$("nt-id").value.trim(); suggestNewId(); });
+  ["nt-group", "nt-discipline"].forEach(id => $(id).addEventListener("change", suggestNewId));
+  $("nt-epic").addEventListener("input", suggestNewId);
   $("newBtn").addEventListener("click", () => openNew($("newTask").hidden));
   $("ntCancel").addEventListener("click", () => openNew(false));
   $("ntForm").addEventListener("submit", e => {
     e.preventDefault();
     const title = $("nt-title").value.trim();
     if (!title) { $("ntErr").textContent = "Give the task a title."; return; }
-    const { ids, unknown } = parseIds($("nt-blockedBy").value, null);
+    const wantId = normId($("nt-id").value) || ntSuggested;
+    const suggested = !ntIdTyped;
+    if (wantId) {
+      const bad = idProblem(wantId); if (bad) { $("ntErr").textContent = bad; return; }
+      if (idTaken(data, wantId) && !suggested) { $("ntErr").textContent = `${wantId} is already used by another ticket. Pick a different ID.`; return; }
+    }
+    const { ids, unknown } = parseIds($("nt-blockedBy").value, wantId || null);
     if (unknown.length) { $("ntErr").textContent = `Unknown ticket ID: ${unknown.join(", ")}`; return; }
     const ticket = {
       title, notes: $("nt-notes").value.trim(), group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted",
@@ -1120,7 +1228,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
     };
     $("ntSubmit").disabled = true;
-    queueOp({ type: "add", ticket }, op => {
+    queueOp({ type: "add", ticket, wantId, suggested }, op => {
       $("ntForm").reset(); openNew(false);
       openEpics.add(ticket.group + "|" + ticket.epic);
       if (!matches({ ...ticket, id: op.newId })) toast(`Added ${op.newId}. Your current filters hide it.`, 5000);
@@ -1132,6 +1240,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     renderSummary();
     const shown = tickets().filter(matches);
     if (F.sort === "priority") shown.sort((a, b) => prioRank(a) - prioRank(b));
+    $("fClear").disabled = Object.keys(F_DEFAULT).every(k => F[k] === F_DEFAULT[k]);
     $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
     const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.priority !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
     let html = "";
