@@ -226,6 +226,14 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .tierbar label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 12.5px; }
 .tierbar select { padding: 4px 8px; font-weight: 600; }
 .d-note { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); padding-block: 7px; }
+/* sections panel */
+.sec-hint { margin: 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
+.sec-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sec-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.sec-list input, .sec-add input { font: 600 14px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; flex: 1 1 200px; min-width: 0; }
+.sec-count { font: 12px var(--mono); color: var(--muted); min-width: 80px; }
+.sec-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.sec-empty { padding: 14px; font-size: 13px; text-align: left; }
 </style>
 </head>
 <body>
@@ -235,6 +243,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     <div class="head-actions" id="headActions" hidden>
       <span class="conn" id="conn"></span>
       <button class="btn primary" id="newBtn" type="button" aria-expanded="false" aria-controls="newTask">+ New task</button>
+      <button class="btn" id="sectionsBtn" type="button" aria-expanded="false" aria-controls="sectionsPanel">Sections</button>
       <button class="btn" id="helpBtn" type="button" aria-expanded="false" aria-controls="help">How to use</button>
       <button class="btn" id="refreshBtn" type="button">Refresh</button>
       <button class="btn" id="exportBtn" type="button">Export CSV</button>
@@ -298,6 +307,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
             <li><b>Click a ticket's title</b> to open it: edit its details, add a note, or delete it.</li>
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
+            <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
             <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
@@ -327,6 +337,18 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <label class="tog"><input type="checkbox" id="nt-stretch"> Stretch goal</label>
         <label class="tog"><input type="checkbox" id="nt-later"> Later</label>
         <div class="d-actions wide"><button class="btn primary" type="submit" id="ntSubmit">Add task</button><span class="err" id="ntErr"></span></div>
+      </form>
+    </section>
+    <section class="newtask" id="sectionsPanel" hidden aria-labelledby="secTitle">
+      <div class="help-head">
+        <h2 id="secTitle">Sections</h2>
+        <button class="btn" id="secClose" type="button">Done</button>
+      </div>
+      <p class="sec-hint">Sections are the big headings on the board, like Foundation or Enemies. Rename one and its tickets move with it. You can only remove a section once it's empty.</p>
+      <ul class="sec-list" id="secList"></ul>
+      <form id="secForm" class="sec-add">
+        <input id="secName" maxlength="40" placeholder="New section name, e.g. Marketing" aria-label="New section name">
+        <button class="btn primary" type="submit">Add section</button>
       </form>
     </section>
     <datalist id="epicList"></datalist>
@@ -377,7 +399,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
   const API = "https://api.github.com";
   const TOKEN_KEY = "tp-gh-token";
-  const GROUPS = ["Foundation", "Hub", "Enemies", "Stages"];
+  const DEFAULT_SECTIONS = ["Foundation", "Hub", "Enemies", "Stages"];
   const ACTS = ["Act 1", "Act 2", "Act 3", "—"];
   const DISC = ["Design", "Code", "Art", "Animation", "Audio", "Narrative", "UI"];
   const DISC_VAR = d => `var(--d-${String(d).toLowerCase()})`;
@@ -391,11 +413,15 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   let pending = 0;
   let canWrite = true;
   let writeNote = "";
+  let lastSections = "";
   const openEpics = new Set();
 
   const team = () => [...(data.team || []), "Unassigned"];
   const statuses = () => (data.statuses && data.statuses.length ? data.statuses : ["To do", "In progress", "Review", "Done"]);
   const tickets = () => data.tickets || [];
+  const baseSections = d => (d.sections && d.sections.length ? d.sections : DEFAULT_SECTIONS);
+  // Listed sections first, then any section a ticket uses that isn't listed, so nothing is ever hidden.
+  const sections = () => { const base = baseSections(data); return [...base, ...new Set(tickets().map(t => t.group).filter(g => g && !base.includes(g)))]; };
 
   // ---------- storage helpers ----------
   const store = {
@@ -460,7 +486,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const ENEMY_T = ["T1", "T2", "T3"];
       const CODE_TITLE = { T2: "perk / modifier hook", T3: "new core action + UI feedback" };
       const firstStatus = (d.statuses && d.statuses[0]) || "To do";
-      const list = d.tickets.filter(t => t.group === "Enemies" && t.epic === op.epic);
+      const list = d.tickets.filter(t => t.epic === op.epic);
       if (!list.length) throw gone(op.epic);
       const notes = [];
       list.forEach(t => { if (!t.tier || ENEMY_T.includes(t.tier)) t.tier = op.tier; });
@@ -480,7 +506,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
           let id = des && /-DES$/.test(des.id) ? des.id.replace(/-DES$/, "-COD") : null;
           if (!id || d.tickets.some(t => t.id === id)) id = nextId(d);
           const owner = (d.team || []).includes("Chris") ? "Chris" : "Unassigned";
-          const ticket = { id, title, notes: "", group: "Enemies", epic: op.epic, act: des ? des.act : (list[0].act || "—"), discipline: "Code", tier: op.tier,
+          const ticket = { id, title, notes: "", group: des ? des.group : list[0].group, epic: op.epic, act: des ? des.act : (list[0].act || "—"), discipline: "Code", tier: op.tier,
             owner, status: firstStatus, blockedBy: des ? [des.id] : [], stretch: des ? !!des.stretch : false, later: false, comments: [] };
           const at = des ? d.tickets.indexOf(des) + 1 : d.tickets.length;
           d.tickets.splice(at, 0, ticket);
@@ -492,6 +518,37 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         a.title = op.tier === "T3" ? base + " + signature action" : base;
       });
       return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
+    }
+    if (op.type === "section") {
+      const userErr = m => Object.assign(new Error(m), { userMsg: m });
+      const used = [...new Set((d.tickets || []).map(t => t.group).filter(Boolean))];
+      const list = [...baseSections(d), ...used.filter(g => !baseSections(d).includes(g))];
+      const has = n => list.some(x => x.toLowerCase() === n.toLowerCase());
+      if (op.action === "add") {
+        if (has(op.name)) throw userErr(`There's already a section called "${op.name}".`);
+        d.sections = [...list, op.name];
+        return `Add section ${op.name}`;
+      }
+      if (op.action === "rename") {
+        if (!list.includes(op.name)) throw userErr(`"${op.name}" doesn't exist any more.`);
+        if (op.to.toLowerCase() !== op.name.toLowerCase() && has(op.to)) throw userErr(`There's already a section called "${op.to}".`);
+        d.sections = list.map(x => x === op.name ? op.to : x);
+        (d.tickets || []).forEach(t => { if (t.group === op.name) t.group = op.to; });
+        return `Rename section ${op.name} → ${op.to}`;
+      }
+      if (op.action === "remove") {
+        const n = (d.tickets || []).filter(t => t.group === op.name).length;
+        if (n) throw userErr(`"${op.name}" still has ${n} ticket${n === 1 ? "" : "s"}. Move or delete them first.`);
+        d.sections = list.filter(x => x !== op.name);
+        return `Remove section ${op.name}`;
+      }
+      if (op.action === "move") {
+        const i = list.indexOf(op.name), j = i + op.dir;
+        if (i < 0 || j < 0 || j >= list.length) return null;
+        const next = [...list]; [next[i], next[j]] = [next[j], next[i]];
+        d.sections = next;
+        return `Move section ${op.name} ${op.dir < 0 ? "up" : "down"}`;
+      }
     }
     if (op.type === "uncomment") {
       const t = find();
@@ -517,6 +574,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
   async function saveOp(op, attempt = 0) {
     const message = applyOp(data, op);
+    if (message == null) return "nothing to change";
     byId = new Map(tickets().map(t => [t.id, t]));
     const body = { message, content: encodeB64(JSON.stringify(data, null, 1) + "\n"), sha };
     const r = await gh(filePath, { method: "PUT", body: JSON.stringify(body) });
@@ -538,7 +596,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       if (onDone) onDone(op);
       return true;
     }).catch(err => {
-      if (err.status === 403 || err.status === 404) { canWrite = false; writeNote = "Can't save. Either your GitHub account only has read access to the tickets repo (ask Ben for Write access), or your token's Contents permission isn't Read and write."; toast(writeNote, 9000); }
+      if (err.userMsg) toast(err.userMsg, 5000);
+      else if (err.status === 403 || err.status === 404) { canWrite = false; writeNote = "Can't save. Either your GitHub account only has read access to the tickets repo (ask Ben for Write access), or your token's Contents permission isn't Read and write."; toast(writeNote, 9000); }
       else if (err.status === 401) { toast("Your token expired or was revoked. Connect again."); disconnect(); }
       else if (err.status === 410) toast(err.note ? "That note was already deleted." : `${err.id} was deleted by someone else.`);
       else toast("Couldn't save. Refresh and try again.");
@@ -579,7 +638,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   function setConn() {
     $("conn").innerHTML = pending ? `<span class="saving">Saving…</span>` : esc(login ? `Connected as @${login}` : "Connected") + (canWrite ? "" : ` · <span class="bad" title="${esc(writeNote)}">view only</span>`);
     $("conn").title = canWrite ? "" : writeNote;
-    $("newBtn").hidden = !canWrite;
+    $("newBtn").hidden = !canWrite; $("sectionsBtn").hidden = !canWrite;
   }
   const isEditing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest(".detail, #newTask") && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
   function showBoard() {
@@ -628,7 +687,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const saveF = () => store.set("tp-filters", JSON.stringify(F));
   const fill = (el, opts, val) => { el.innerHTML = opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join(""); };
   function fillFilters() {
-    fill($("fGroup"), ["All", ...GROUPS], F.group);
+    if (F.group !== "All" && !sections().includes(F.group)) F.group = "All";
+    fill($("fGroup"), ["All", ...sections()], F.group); lastSections = sections().join("|");
     fill($("fAct"), ["All", ...ACTS], F.act);
     fill($("fDisc"), ["All", ...DISC], F.disc);
     fill($("fOwner"), ["All", ...team()], F.owner);
@@ -729,11 +789,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <div class="d-grid">
         ${f("Title", `<input data-d="title" value="${esc(dv(t, "title"))}" maxlength="160"${dis}>`, "wide")}
         ${f("Description", `<textarea data-d="notes" rows="3"${dis}>${esc(dv(t, "notes") || "")}</textarea>`, "wide")}
-        ${f("Section", `<select data-d="group"${dis}>${opts(GROUPS, dv(t, "group"))}</select>`)}
+        ${f("Section", `<select data-d="group"${dis}>${opts(sections(), dv(t, "group"))}</select>`)}
         ${f("Group", `<input data-d="epic" list="epicList" value="${esc(dv(t, "epic"))}"${dis}>`)}
         ${f("Act", `<select data-d="act"${dis}>${opts(ACTS, dv(t, "act"))}</select>`)}
         ${f("Discipline", `<select data-d="discipline"${dis}>${opts(DISC, dv(t, "discipline"))}</select>`)}
-        ${t.group === "Enemies" && enemyTier(t.epic)
+        ${enemyTier(t.epic)
           ? f("Tier", `<span class="d-note">${tierChip(t.tier)} Set for the whole enemy at the top of its group.</span>`)
           : f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
         ${f("Waits on (ticket IDs)", `<input data-d="blockedBy" list="idList" value="${esc(bbStr)}"${dis}>`)}
@@ -810,13 +870,57 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     }
   });
 
+  // ---------- sections ----------
+  function renderSections() {
+    const list = sections();
+    $("secList").innerHTML = list.map((s, i) => {
+      const n = tickets().filter(t => t.group === s).length;
+      return `<li data-sec="${esc(s)}">
+        <input value="${esc(s)}" maxlength="40" aria-label="Rename ${esc(s)}" data-sec-name>
+        <span class="sec-count">${n} ticket${n === 1 ? "" : "s"}</span>
+        <button type="button" class="btn" data-sec-act="up"${i === 0 ? " disabled" : ""} aria-label="Move ${esc(s)} up">↑</button>
+        <button type="button" class="btn" data-sec-act="down"${i === list.length - 1 ? " disabled" : ""} aria-label="Move ${esc(s)} down">↓</button>
+        <button type="button" class="btn" data-sec-act="rename">Rename</button>
+        <button type="button" class="btn danger" data-sec-act="remove"${n ? ` disabled title="Move or delete its tickets first"` : ""}>Remove</button>
+      </li>`;
+    }).join("");
+  }
+  function openSections(open) {
+    $("sectionsPanel").hidden = !open;
+    $("sectionsBtn").setAttribute("aria-expanded", String(open));
+    if (open) { renderSections(); $("sectionsPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  }
+  $("sectionsBtn").addEventListener("click", () => openSections($("sectionsPanel").hidden));
+  $("secClose").addEventListener("click", () => openSections(false));
+  $("secForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("secName").value.trim().replace(/\s+/g, " ");
+    if (!name) { toast("Type a name for the new section."); return; }
+    queueOp({ type: "section", action: "add", name }, () => { $("secName").value = ""; renderSections(); });
+  });
+  $("secList").addEventListener("click", e => {
+    const btn = e.target.closest("[data-sec-act]"); if (!btn) return;
+    const li = btn.closest("li"); const name = li.dataset.sec; const act = btn.dataset.secAct;
+    if (act === "rename") {
+      const to = li.querySelector("[data-sec-name]").value.trim().replace(/\s+/g, " ");
+      if (!to) { toast("A section needs a name."); return; }
+      if (to === name) return;
+      queueOp({ type: "section", action: "rename", name, to }, () => { if (F.group === name) { F.group = to; saveF(); } renderSections(); });
+    }
+    if (act === "remove") queueOp({ type: "section", action: "remove", name }, renderSections);
+    if (act === "up" || act === "down") queueOp({ type: "section", action: "move", name, dir: act === "up" ? -1 : 1 }, renderSections);
+  });
+  $("secList").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.matches("[data-sec-name]")) { e.preventDefault(); e.target.closest("li").querySelector('[data-sec-act="rename"]').click(); }
+  });
+
   // ---------- new task ----------
   function openNew(open) {
     $("newTask").hidden = !open;
     $("newBtn").setAttribute("aria-expanded", String(open));
     if (!open) return;
     const pick = (v, list, dflt) => (v !== "All" && list.includes(v) ? v : dflt);
-    $("nt-group").innerHTML = opts(GROUPS, pick(F.group, GROUPS, "Foundation"));
+    $("nt-group").innerHTML = opts(sections(), pick(F.group, sections(), sections()[0]));
     $("nt-act").innerHTML = opts(ACTS, pick(F.act, ACTS, "—"));
     $("nt-discipline").innerHTML = opts(DISC, pick(F.disc, DISC, "Design"));
     $("nt-tier").innerHTML = opts(TIERS, "", o => o || "None");
@@ -855,12 +959,16 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
     const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
     let html = "";
-    for (const g of GROUPS) {
+    if (sections().join("|") !== lastSections) fillFilters();
+    for (const g of sections()) {
       const inG = shown.filter(t => t.group === g);
-      if (!inG.length) continue;
+      if (!inG.length) {
+        if (!filtering && !tickets().some(t => t.group === g)) html += `<section class="section"><h3>${esc(g)}<span>0 tickets</span></h3><div class="empty sec-empty">No tickets yet. Use <b>+ New task</b> and pick ${esc(g)} as the section.</div></section>`;
+        continue;
+      }
       const epics = [];
       for (const t of inG) { let e = epics.find(x => x.name === t.epic); if (!e) epics.push(e = { name: t.epic, items: [] }); e.items.push(t); }
-      html += `<section class="section"><h3>${g}<span>${inG.length} ticket${inG.length === 1 ? "" : "s"}</span></h3>`;
+      html += `<section class="section"><h3>${esc(g)}<span>${inG.length} ticket${inG.length === 1 ? "" : "s"}</span></h3>`;
       for (const e of epics) {
         const all = tickets().filter(t => t.epic === e.name && inScope(t));
         const d = all.filter(isDone).length;
@@ -882,13 +990,12 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   // ---------- enemy tier ----------
   const ENEMY_TIERS = ["T1", "T2", "T3"];
   const enemyTier = epic => {
-    const ts = tickets().filter(t => t.group === "Enemies" && t.epic === epic).map(t => t.tier).filter(Boolean);
+    const ts = tickets().filter(t => t.epic === epic).map(t => t.tier).filter(Boolean);
     if (!ts.length || !ts.every(x => ENEMY_TIERS.includes(x))) return null;
     const count = {}; ts.forEach(x => count[x] = (count[x] || 0) + 1);
     return Object.keys(count).sort((a, b) => count[b] - count[a])[0];
   };
   function tierBar(group, epic) {
-    if (group !== "Enemies") return "";
     const cur = enemyTier(epic); if (!cur) return "";
     const what = { T1: "uses existing mechanics only, no code ticket", T2: "adds a perk or modifier, with a code ticket", T3: "adds a new mechanic, with a code ticket and a signature animation" }[cur];
     return `<div class="tierbar"><label>Enemy tier <select data-tier-epic="${esc(epic)}" aria-label="Tier for ${esc(epic)}"${canWrite ? "" : " disabled"}>${opts(ENEMY_TIERS, cur)}</select></label><span>${esc(what)}. Changing it updates this enemy's tickets.</span></div>`;
