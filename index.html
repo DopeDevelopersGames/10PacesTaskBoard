@@ -100,8 +100,11 @@ h1 small { display: block; font-family: var(--body); font-weight: 500; font-size
 select, input[type=search] { font: 13px var(--body); color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
 input[type=search] { width: 200px; }
 .toggle { flex-direction: row !important; align-items: center; gap: 6px !important; font-size: 12px !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--ink) !important; padding-top: 14px; cursor: pointer; }
-.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); padding-top: 14px; }
-@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; padding-top: 0; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
+.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
+.filters .btn.clear { align-self: flex-end; padding-block: 6px; }
+.f-row2 { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
+.f-row2 .toggle { padding-top: 0; }
+@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
 
 /* list */
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -341,7 +344,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
           <h3>Your day-to-day</h3>
           <ol>
             <li>Set <b>Owner</b> to your name.</li>
-            <li>Tick <b>Ready to start only</b> to see what you can pick up now.</li>
+            <li>Tick <b>Ready to start only</b> (under the filters) to see what you can pick up now. <b>Clear all filters</b> takes you back to the full board.</li>
             <li>When you start a ticket, set it to <b>In progress</b>.</li>
             <li>When it's ready for a look, set it to <b>Review</b>. Ben moves it to <b>Done</b>, or you do if it needs no review.</li>
           </ol>
@@ -369,7 +372,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
-            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or choose <b>Sort → Priority</b> to put P0 work at the top of every group.</li>
+            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or tick <b>Sort by priority</b> to put P0 work at the top of every group.</li>
             <li><b>+ New task</b> adds a ticket. Its ID is filled in for you from the section, group and discipline (e.g. <code>FND-22-DES</code>, <code>E-B1-AUD</code>). Type over it to use your own, like <code>HUB-V1</code>.</li>
             <li><b>Changing an ID</b>: open the ticket and edit <b>Ticket ID</b>. Tickets that wait on it are updated to the new ID. IDs must be unique.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
@@ -457,10 +460,13 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <label>Owner<select id="fOwner"></select></label>
       <label>Status<select id="fStatus"></select></label>
       <label>Priority<select id="fPriority"></select></label>
-      <label>Sort<select id="fSort"><option value="board">Board order</option><option value="priority">Priority (P0 first)</option></select></label>
-      <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
-      <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
-      <span class="shown" id="shown"></span>
+      <button class="btn clear" id="fClear" type="button">Clear all filters</button>
+      <div class="f-row2">
+        <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
+        <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
+        <label class="toggle"><input type="checkbox" id="fSortPrio"> Sort by priority</label>
+        <span class="shown" id="shown"></span>
+      </div>
     </div>
 
     <main id="list" style="margin-top:16px; display:flex; flex-direction:column; gap:10px"></main>
@@ -861,7 +867,8 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(true); });
 
   // ---------- filters ----------
-  const F = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
+  const F_DEFAULT = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
+  const F = { ...F_DEFAULT };
   try { Object.assign(F, JSON.parse(store.get("tp-filters") || "{}")); } catch (e) {}
   const saveF = () => store.set("tp-filters", JSON.stringify(F));
   const fill = (el, opts, val) => { el.innerHTML = opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join(""); };
@@ -876,12 +883,16 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     if (F.priority !== "All" && ![...PRIORITIES, NO_PRIORITY].includes(F.priority)) F.priority = "All";
     fill($("fPriority"), ["All", ...PRIORITIES, NO_PRIORITY], F.priority);
     if (!["board", "priority"].includes(F.sort)) F.sort = "board";
-    $("fSort").value = F.sort;
+    $("fSortPrio").checked = F.sort === "priority";
     $("fSearch").value = F.search; $("fReady").checked = F.ready; $("fExtra").checked = F.extra;
   }
   const bind = (id, key, prop = "value") => $(id).addEventListener(prop === "checked" ? "change" : (id === "fSearch" ? "input" : "change"), e => { F[key] = e.target[prop]; saveF(); render(); });
   bind("fSearch", "search"); bind("fGroup", "group"); bind("fAct", "act"); bind("fDisc", "disc");
-  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fSort", "sort"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
+  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
+
+  $("fSortPrio").addEventListener("change", e => { F.sort = e.target.checked ? "priority" : "board"; saveF(); render(); });
+  // Back to the board's default view: every filter cleared, open tickets only, board order.
+  $("fClear").addEventListener("click", () => { Object.assign(F, F_DEFAULT); saveF(); fillFilters(); render(); });
 
   const DONE = "Done";
   const isDone = t => t.status === DONE;
@@ -1229,6 +1240,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     renderSummary();
     const shown = tickets().filter(matches);
     if (F.sort === "priority") shown.sort((a, b) => prioRank(a) - prioRank(b));
+    $("fClear").disabled = Object.keys(F_DEFAULT).every(k => F[k] === F_DEFAULT[k]);
     $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
     const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.priority !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
     let html = "";
