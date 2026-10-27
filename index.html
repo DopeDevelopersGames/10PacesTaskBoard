@@ -100,11 +100,8 @@ h1 small { display: block; font-family: var(--body); font-weight: 500; font-size
 select, input[type=search] { font: 13px var(--body); color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
 input[type=search] { width: 200px; }
 .toggle { flex-direction: row !important; align-items: center; gap: 6px !important; font-size: 12px !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--ink) !important; padding-top: 14px; cursor: pointer; }
-.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
-.filters .btn.clear { align-self: flex-end; padding-block: 6px; }
-.f-row2 { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
-.f-row2 .toggle { padding-top: 0; }
-@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
+.shown { margin-left: auto; font: 12px var(--mono); color: var(--muted); padding-top: 14px; }
+@media (max-width: 560px) { .shown { margin-left: 0; width: 100%; padding-top: 0; } input[type=search] { width: 100%; } .filters label:has(input[type=search]) { width: 100%; } }
 
 /* list */
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -121,10 +118,10 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .mini i { display: block; height: 100%; background: var(--ok); }
 
 .rows { border-top: 1px solid var(--line); }
-.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 78px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 96px 130px 132px; gap: 6px 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }
 .row.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
-.id { font: 500 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.id { font: 500 12px var(--mono); color: var(--muted); white-space: nowrap; }
 .title { font-weight: 500; }
 .notes { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .flags { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 11.5px; }
@@ -150,7 +147,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .row .id { grid-column: 1 / -1; }
   .row .main { grid-column: 1 / -1; }
-  .row .disc { grid-column: 1; }
+  .row .disc { grid-column: 1 / -1; }
 }
 
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 28px; text-align: center; color: var(--muted); }
@@ -228,7 +225,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .tierbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raise); font-size: 12.5px; color: var(--muted); }
 .tierbar label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); font-size: 12.5px; }
 .tierbar select { padding: 4px 8px; font-weight: 600; }
-.d-hint { text-transform: none; letter-spacing: 0; font-size: 11.5px; color: var(--muted); }
 .d-note { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); padding-block: 7px; }
 /* sections panel */
 .sec-hint { margin: 0; color: var(--muted); font-size: 13px; max-width: 70ch; }
@@ -255,21 +251,28 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 .st-key-review { color: var(--st-review); background: color-mix(in srgb, var(--st-review) 16%, transparent); }
 .st-key-done { color: var(--st-done); background: color-mix(in srgb, var(--st-done) 14%, transparent); }
 .row.done .title { text-decoration: none; }
-/* priority: P0 highest */
-:root { --p0: #c0392b; --p1: #d9701e; --p2: #b8930f; --p3: #2c6fae; --p4: #6a665e; --p5: #8f8a80; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --p0: #ef6b5b; --p1: #f0954a; --p2: #e0c04a; --p3: #6fa8dc; --p4: #a39d91; --p5: #847f75; } }
-:root[data-theme="dark"] { --p0: #ef6b5b; --p1: #f0954a; --p2: #e0c04a; --p3: #6fa8dc; --p4: #a39d91; --p5: #847f75; }
-.row select.pr-P0 { color: var(--p0); border-color: var(--p0); font-weight: 700; }
-.row select.pr-P1 { color: var(--p1); border-color: var(--p1); font-weight: 700; }
-.row select.pr-P2 { color: var(--p2); border-color: var(--p2); font-weight: 600; }
-.row select.pr-P3 { color: var(--p3); font-weight: 600; }
-.row select.pr-P4 { color: var(--p4); font-weight: 600; }
-.row select.pr-P5 { color: var(--p5); font-weight: 600; }
-.row select.pr-None { color: var(--muted); }
-.pr-key { font-weight: 700; padding: 0 5px; border-radius: 3px; }
-.pr-key-P0 { color: var(--p0); background: color-mix(in srgb, var(--p0) 14%, transparent); }
-.pr-key-P1 { color: var(--p1); background: color-mix(in srgb, var(--p1) 14%, transparent); }
-.pr-key-P2 { color: var(--p2); background: color-mix(in srgb, var(--p2) 16%, transparent); }
+/* section tabs + group sub-tabs */
+#list { gap: 0 !important; }
+.tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: 2px solid var(--line); }
+.tab { all: unset; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; padding: 8px 14px 7px; margin-bottom: -2px; border-bottom: 3px solid transparent; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); }
+.tab:hover { color: var(--ink); }
+.tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tab.dim { opacity: 0.55; }
+.tab:focus-visible, .sub:focus-visible, .linkish:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.tab-n { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0; }
+.subtabs { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 12px 4px; }
+.sub { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12.5px; font-weight: 500; color: var(--ink); white-space: nowrap; }
+.sub:hover { border-color: var(--accent); }
+.sub.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.sub.dim { opacity: 0.5; }
+.sub-n { font: 11px var(--mono); color: var(--muted); }
+.sub.on .sub-n { color: inherit; opacity: 0.85; }
+.sub-tier { font: 700 9.5px var(--body); padding: 1px 4px; border-radius: 3px; letter-spacing: 0.03em; }
+.tab-body { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
+.grp { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.grp-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; }
+.grp-name { font-weight: 600; font-size: 15px; }
+.linkish { all: unset; cursor: pointer; color: var(--accent); text-decoration: underline; margin-inline: 4px; }
 </style>
 <script>
 (() => {
@@ -344,7 +347,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
           <h3>Your day-to-day</h3>
           <ol>
             <li>Set <b>Owner</b> to your name.</li>
-            <li>Tick <b>Ready to start only</b> (under the filters) to see what you can pick up now. <b>Clear all filters</b> takes you back to the full board.</li>
+            <li>Tick <b>Ready to start only</b> to see what you can pick up now.</li>
             <li>When you start a ticket, set it to <b>In progress</b>.</li>
             <li>When it's ready for a look, set it to <b>Review</b>. Ben moves it to <b>Done</b>, or you do if it needs no review.</li>
           </ol>
@@ -357,7 +360,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
             <dt>Prefixes</dt><dd><code>FND</code> foundation · <code>HUB</code> hub · <code>E-</code> enemy · <code>SRV</code> Survive · <code>STG</code> stage</dd>
             <dt>Endings</dt><dd><code>DES</code> design · <code>COD</code> code · <code>ART</code> art · <code>ANI</code> animation · <code>AUD</code> audio · <code>NAR</code> narrative</dd>
             <dt>Row colour</dt><dd>Shows status: plain is <b>To do</b>, <span class="st-key st-key-prog">blue</span> is <b>In progress</b>, <span class="st-key st-key-review">amber</span> is <b>Review</b>, <span class="st-key st-key-done">green</span> is <b>Done</b>.</dd>
-            <dt>Priority</dt><dd><span class="pr-key pr-key-P0">P0</span> is the most urgent, down to <b>P5</b> the least. <b>None</b> means it hasn't been prioritised yet.</dd>
             <dt>Waiting on</dt><dd>Needs those tickets done first. Turns into <b class="ok">Ready</b> once they are.</dd>
             <dt>Tiers</dt><dd><span class="chip tier-T1">T1</span> existing mechanics · <span class="chip tier-T2">T2</span> perk or modifier · <span class="chip tier-T3">T3</span> new mechanic · <span class="chip tier-Reuse">Reuse</span> existing art · <span class="chip tier-Mode">Mode</span> Survive mode</dd>
           </dl>
@@ -365,16 +367,14 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <div class="help-card">
           <h3>Good to know</h3>
           <ul>
-            <li>Tickets are grouped by section, then by enemy, stage or system. Click a group to open or close it.</li>
+            <li>Tabs across the top pick a <b>section</b>; the smaller tabs under them pick a <b>group</b> (an enemy, stage or system), or <b>All</b> to see the whole section. Numbers show how many tickets match your filters.</li>
             <li><b>Stretch</b> and <b>Later</b> tickets are hidden until you tick <b>Include stretch &amp; later</b>.</li>
             <li>Other people's changes appear within about 45 seconds, or click <b>Refresh</b>.</li>
             <li><b>Click a ticket's title</b> to open it: edit its details, add a note, or delete it.</li>
             <li><b>Enemy tier</b>: open an enemy's group and use the picker at the top. It adds or removes the code ticket and adjusts the animation ticket to match.</li>
             <li><b>Team</b> (top bar) adds, renames or removes owners.</li>
             <li><b>Sections</b> (top bar) lets you add, rename, reorder or remove the big headings.</li>
-            <li><b>Priority</b>: set it from the dropdown on each row. Filter by it, or tick <b>Arrange by priority</b> to put P0 work at the top of every group.</li>
-            <li><b>+ New task</b> adds a ticket. Its ID is filled in for you from the section, group and discipline (e.g. <code>FND-22-DES</code>, <code>E-B1-AUD</code>). Type over it to use your own, like <code>HUB-V1</code>.</li>
-            <li><b>Changing an ID</b>: open the ticket and edit <b>Ticket ID</b>. Tickets that wait on it are updated to the new ID. IDs must be unique.</li>
+            <li><b>+ New task</b> adds a ticket. New tickets get IDs like <code>TK-001</code>.</li>
             <li>Use <b>notes</b> for progress, questions and links. Everyone sees them, with your name and the date.</li>
             <li>On a shared computer, click <b>Disconnect</b> when you're done.</li>
             <li><b>Export CSV</b> downloads whatever the current filters show.</li>
@@ -390,7 +390,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <button class="btn" id="ntCancel" type="button">Cancel</button>
       </div>
       <form id="ntForm" class="d-grid">
-        <label>Ticket ID<input id="nt-id" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="e.g. HUB-V1" aria-describedby="nt-idHint"><span class="d-hint" id="nt-idHint"></span></label>
         <label class="wide">Title<input id="nt-title" required maxlength="160" placeholder="e.g. Boss 3: hit-flash VFX"></label>
         <label class="wide">Description<textarea id="nt-notes" rows="3" placeholder="What needs doing, links, acceptance notes…"></textarea></label>
         <label>Section<select id="nt-group"></select></label>
@@ -400,7 +399,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         <label>Tier<select id="nt-tier"></select></label>
         <label>Owner<select id="nt-owner"></select></label>
         <label>Status<select id="nt-status"></select></label>
-        <label>Priority<select id="nt-priority"></select></label>
         <label>Waits on (ticket IDs)<input id="nt-blockedBy" list="idList" placeholder="e.g. E-B3-ART, HUB-06"></label>
         <label class="tog"><input type="checkbox" id="nt-stretch"> Stretch goal</label>
         <label class="tog"><input type="checkbox" id="nt-later"> Later</label>
@@ -454,19 +452,13 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
     <div class="filters" role="search" style="margin-top:22px">
       <label>Search<input type="search" id="fSearch" placeholder="Boss 2, sprite, B1…"></label>
-      <label>Section<select id="fGroup"></select></label>
       <label>Act<select id="fAct"></select></label>
       <label>Discipline<select id="fDisc"></select></label>
       <label>Owner<select id="fOwner"></select></label>
       <label>Status<select id="fStatus"></select></label>
-      <label>Priority<select id="fPriority"></select></label>
-      <button class="btn clear" id="fClear" type="button">Clear all filters</button>
-      <div class="f-row2">
-        <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
-        <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
-        <label class="toggle"><input type="checkbox" id="fSortPrio"> Arrange by priority</label>
-        <span class="shown" id="shown"></span>
-      </div>
+      <label class="toggle"><input type="checkbox" id="fReady"> Ready to start only</label>
+      <label class="toggle"><input type="checkbox" id="fExtra"> Include stretch &amp; later</label>
+      <span class="shown" id="shown"></span>
     </div>
 
     <main id="list" style="margin-top:16px; display:flex; flex-direction:column; gap:10px"></main>
@@ -487,11 +479,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const DEFAULT_SECTIONS = ["Foundation", "Hub", "Enemies", "Stages"];
   const ACTS = ["Act 1", "Act 2", "Act 3", "—"];
   const DISC = ["Design", "Code", "Art", "Animation", "Audio", "Narrative", "UI"];
-  // Priority: P0 is the most urgent. Tickets without one ("" or missing) count as None and sort last.
-  const PRIORITIES = ["P0", "P1", "P2", "P3", "P4", "P5"];
-  const NO_PRIORITY = "None";
-  const prio = t => (PRIORITIES.includes(t.priority) ? t.priority : NO_PRIORITY);
-  const prioRank = t => { const i = PRIORITIES.indexOf(t.priority); return i < 0 ? PRIORITIES.length : i; };
   const DISC_VAR = d => `var(--d-${String(d).toLowerCase()})`;
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -553,49 +540,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   // Every change is an operation applied to the latest data. If someone else saved first,
   // the file is reloaded and the same operation is applied again on top of their change.
   const gone = id => Object.assign(new Error("gone"), { status: 410, id });
-  // Ticket IDs are uppercase letters, digits, "-", "_" or "." (no spaces or commas, since "Waits on" lists are split on those).
-  const ID_RE = /^[A-Z0-9][A-Z0-9._-]{0,39}$/;
-  const normId = s => String(s || "").trim().toUpperCase().replace(/\s+/g, "-");
-  const idProblem = id => !id ? "A ticket needs an ID." : ID_RE.test(id) ? "" : `"${id}" isn't a valid ID. Use letters, numbers and dashes, like HUB-V1.`;
-  const idTaken = (d, id, except) => (d.tickets || []).some(t => t !== except && String(t.id).toUpperCase() === id);
-  // Suggested IDs follow the board's labelling: what it belongs to, then the discipline (STG-3-ART, E-B1-COD).
-  const SECTION_CODE = { Foundation: "FND", Hub: "HUB", Enemies: "E", Tooling: "TOOL", Stages: "STG", Marketing: "MKT", Production: "PROD" };
-  const DISC_CODE = { Design: "DES", Code: "COD", Art: "ART", Animation: "ANI", Audio: "AUD", Narrative: "NAR", UI: "UI" };
-  const DISC_END = new RegExp(`^(.+)-(${Object.values(DISC_CODE).join("|")})$`);
-  const mostCommon = list => { const c = {}; list.forEach(x => c[x] = (c[x] || 0) + 1); return Object.keys(c).sort((a, b) => c[b] - c[a])[0]; };
-  function sectionCode(d, group) {
-    if (SECTION_CODE[group]) return SECTION_CODE[group];
-    const used = (d.tickets || []).filter(t => t.group === group && !/^TK-/.test(t.id)).map(t => String(t.id).split("-")[0]);
-    if (used.length) return mostCommon(used);
-    const words = String(group || "").toUpperCase().replace(/[^A-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
-    return (words.length > 1 ? words.map(w => w[0]).join("") : (words[0] || "TK").slice(0, 3)) || "TK";
-  }
-  function suggestId(d, t) {
-    const disc = DISC_CODE[t.discipline] || String(t.discipline || "").toUpperCase().slice(0, 3);
-    const mates = (d.tickets || []).filter(x => x.epic === t.epic && x.group === t.group && !/^TK-/.test(x.id)).map(x => String(x.id));
-    // Same group already has IDs like E-B1-ART: reuse that stem with this discipline.
-    const stems = mates.map(id => (DISC_END.exec(id) || [])[1]).filter(Boolean);
-    let base;
-    if (stems.length) base = `${mostCommon(stems)}-${disc}`;
-    else {
-      const numbered = mates.map(id => (/^([A-Z]+)-\d+/.exec(id) || [])[1]).filter(Boolean);
-      const pre = numbered.length ? mostCommon(numbered) : sectionCode(d, t.group);
-      // A new group in a section that names tickets per group (Enemies, Stages): short code from the group name, Boss 9 → B9.
-      const inSec = (d.tickets || []).filter(x => x.group === t.group && !/^TK-/.test(x.id));
-      if (!numbered.length && inSec.length && inSec.filter(x => DISC_END.test(x.id)).length * 2 > inSec.length && t.epic && t.epic !== "Unsorted") {
-        const words = String(t.epic).toUpperCase().replace(/\(.*?\)/g, " ").replace(/[^A-Z0-9 ]/g, " ").split(/\s+/).filter(Boolean).filter((w, i) => !(i === 0 && pre === "STG" && w === "STAGE"));
-        const stem = words.map(w => /^\d+$/.test(w) ? w : w[0]).join("").slice(0, 8);
-        if (stem) { base = `${pre}-${stem}-${disc}`; let id = base; for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`; return id; }
-      }
-      const re = new RegExp(`^${pre}-(\\d+)(?:-|$)`);
-      let max = 0;
-      for (const x of d.tickets || []) { const m = re.exec(String(x.id)); if (m) max = Math.max(max, +m[1]); }
-      base = `${pre}-${String(max + 1).padStart(2, "0")}-${disc}`;
-    }
-    let id = base;
-    for (let n = 2; idTaken(d, id); n++) id = `${base}-${n}`;
-    return id;
-  }
   function nextId(d) {
     let max = 0;
     for (const t of d.tickets || []) { const m = /^TK-(\d+)$/.exec(t.id); if (m) max = Math.max(max, +m[1]); }
@@ -605,28 +549,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const find = () => { const t = (d.tickets || []).find(x => x.id === op.id); if (!t) throw gone(op.id); return t; };
     const short = s => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > 70 ? s.slice(0, 67) + "…" : s; };
     const label = t => t.title ? `${t.id} (${short(t.title)})` : t.id;
-    const userErr = m => Object.assign(new Error(m), { userMsg: m });
     if (op.type === "set") {
-      const t = find();
-      const fields = { ...op.fields };
-      let renamed = "";
-      if ("id" in fields) {
-        const from = t.id, to = fields.id; delete fields.id;
-        if (to !== from) {
-          const bad = idProblem(to); if (bad) throw userErr(bad);
-          if (idTaken(d, to, t)) throw userErr(`${to} is already used by another ticket.`);
-          t.id = to;
-          d.tickets.forEach(x => { if (x.blockedBy && x.blockedBy.includes(from)) x.blockedBy = x.blockedBy.map(b => b === from ? to : b); });
-          op.renamedTo = to;
-          renamed = `${from} → ${to}`;
-        }
-      }
-      Object.assign(t, fields);
-      const keys = Object.keys(fields);
-      if (renamed) return `Change ID ${renamed}` + (keys.length ? `; edited ${keys.join(", ")}` : "");
-      if (!keys.length) return null;
+      const t = find(); Object.assign(t, op.fields);
+      const keys = Object.keys(op.fields);
       return keys.length === 1 && typeof op.fields[keys[0]] === "string" && keys[0] !== "notes" && keys[0] !== "title"
-        ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]] || "none"}` : `${label(t)}: edited ${keys.join(", ")}`;
+        ? `${label(t)}: ${keys[0]} → ${op.fields[keys[0]]}` : `${label(t)}: edited ${keys.join(", ")}`;
     }
     if (op.type === "comment") {
       const t = find(); t.comments = [...(t.comments || []), op.comment];
@@ -670,6 +597,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${op.epic}: tier → ${op.tier}` + (notes.length ? ` (${notes.join("; ")})` : "");
     }
     if (op.type === "member") {
+      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const list = [...(d.team || [])];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase()) || n.toLowerCase() === "unassigned";
       if (op.action === "add") {
@@ -699,6 +627,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       }
     }
     if (op.type === "section") {
+      const userErr = m => Object.assign(new Error(m), { userMsg: m });
       const used = [...new Set((d.tickets || []).map(t => t.group).filter(Boolean))];
       const list = [...baseSections(d), ...used.filter(g => !baseSections(d).includes(g))];
       const has = n => list.some(x => x.toLowerCase() === n.toLowerCase());
@@ -737,14 +666,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       return `${label(t)}: deleted a note`;
     }
     if (op.type === "add") {
-      let id;
-      if (op.wantId) {
-        const bad = idProblem(op.wantId); if (bad) throw userErr(bad);
-        if (!idTaken(d, op.wantId)) id = op.wantId;
-        else if (op.suggested) id = suggestId(d, op.ticket);
-        else throw userErr(`${op.wantId} is already used by another ticket. Pick a different ID.`);
-      } else id = nextId(d);
-      op.newId = id;
+      const id = nextId(d); op.newId = id;
       d.tickets.push({ ...op.ticket, id });
       return `Add ${id} (${short(op.ticket.title)})`;
     }
@@ -867,32 +789,25 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(true); });
 
   // ---------- filters ----------
-  const F_DEFAULT = { search: "", group: "All", act: "All", disc: "All", owner: "All", status: "Open", priority: "All", sort: "board", ready: false, extra: false };
-  const F = { ...F_DEFAULT };
+  const F = { search: "", act: "All", disc: "All", owner: "All", status: "Open", ready: false, extra: false, tab: null, sub: {} };
   try { Object.assign(F, JSON.parse(store.get("tp-filters") || "{}")); } catch (e) {}
+  if (!F.tab && F.group && F.group !== "All") F.tab = F.group;
+  delete F.group;
+  if (!F.sub || typeof F.sub !== "object") F.sub = {};
   const saveF = () => store.set("tp-filters", JSON.stringify(F));
   const fill = (el, opts, val) => { el.innerHTML = opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join(""); };
   function fillFilters() {
-    if (F.group !== "All" && !sections().includes(F.group)) F.group = "All";
-    fill($("fGroup"), ["All", ...sections()], F.group); lastSections = sections().join("|");
+    lastSections = sections().join("|");
     fill($("fAct"), ["All", ...ACTS], F.act);
     fill($("fDisc"), ["All", ...DISC], F.disc);
     if (F.owner !== "All" && !team().includes(F.owner)) F.owner = "All";
     fill($("fOwner"), ["All", ...team()], F.owner);
     fill($("fStatus"), ["All", "Open", ...statuses()], F.status);
-    if (F.priority !== "All" && ![...PRIORITIES, NO_PRIORITY].includes(F.priority)) F.priority = "All";
-    fill($("fPriority"), ["All", ...PRIORITIES, NO_PRIORITY], F.priority);
-    if (!["board", "priority"].includes(F.sort)) F.sort = "board";
-    $("fSortPrio").checked = F.sort === "priority";
     $("fSearch").value = F.search; $("fReady").checked = F.ready; $("fExtra").checked = F.extra;
   }
   const bind = (id, key, prop = "value") => $(id).addEventListener(prop === "checked" ? "change" : (id === "fSearch" ? "input" : "change"), e => { F[key] = e.target[prop]; saveF(); render(); });
-  bind("fSearch", "search"); bind("fGroup", "group"); bind("fAct", "act"); bind("fDisc", "disc");
-  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fPriority", "priority"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
-
-  $("fSortPrio").addEventListener("change", e => { F.sort = e.target.checked ? "priority" : "board"; saveF(); render(); });
-  // Back to the board's default view: every filter cleared, open tickets only, board order.
-  $("fClear").addEventListener("click", () => { Object.assign(F, F_DEFAULT); saveF(); fillFilters(); render(); });
+  bind("fSearch", "search"); bind("fAct", "act"); bind("fDisc", "disc");
+  bind("fOwner", "owner"); bind("fStatus", "status"); bind("fReady", "ready", "checked"); bind("fExtra", "extra", "checked");
 
   const DONE = "Done";
   const isDone = t => t.status === DONE;
@@ -900,17 +815,15 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const inScope = t => F.extra || (!t.stretch && !t.later);
   function matches(t) {
     if (!inScope(t)) return false;
-    if (F.group !== "All" && t.group !== F.group) return false;
     if (F.act !== "All" && t.act !== F.act) return false;
     if (F.disc !== "All" && t.discipline !== F.disc) return false;
     if (F.owner !== "All" && t.owner !== F.owner) return false;
     if (F.status === "Open" && isDone(t)) return false;
     if (F.status !== "All" && F.status !== "Open" && t.status !== F.status) return false;
-    if (F.priority !== "All" && prio(t) !== F.priority) return false;
     if (F.ready && (isDone(t) || openBlockers(t).length)) return false;
     if (F.search) {
       const q = F.search.toLowerCase();
-      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier, t.priority, ...(t.comments || []).map(c => c.text)].join(" ").toLowerCase().includes(q)) return false;
+      if (![t.id, t.title, t.notes, t.epic, t.owner, t.discipline, t.tier, ...(t.comments || []).map(c => c.text)].join(" ").toLowerCase().includes(q)) return false;
     }
     return true;
   }
@@ -938,9 +851,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   const sel = (id, field, opts, val, cls) =>
     `<select data-id="${esc(id)}" data-field="${field}" class="${cls}" aria-label="${field} for ${esc(id)}"${canWrite ? "" : " disabled"}>${opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
 
-  const prioSel = t =>
-    `<select data-id="${esc(t.id)}" data-field="priority" class="pr-${prio(t)}" aria-label="priority for ${esc(t.id)}"${canWrite ? "" : " disabled"}>${opts(["", ...PRIORITIES], PRIORITIES.includes(t.priority) ? t.priority : "", o => o || NO_PRIORITY)}</select>`;
-
   function rowHtml(t) {
     const ob = openBlockers(t), deps = t.blockedBy || [];
     let flag = "";
@@ -957,7 +867,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       <span class="id">${esc(t.id)}</span>
       <div class="main"><button type="button" class="title" data-act="toggle" data-id="${esc(t.id)}" aria-expanded="${open}">${esc(t.title)}</button>${t.notes && !open ? `<div class="notes">${esc(t.notes)}</div>` : ""}${flag || extras || ncChip ? `<div class="flags">${extras}${ncChip}${flag}</div>` : ""}</div>
       <span class="disc"><i style="background:${DISC_VAR(t.discipline)}"></i>${esc(t.discipline)}</span>
-      ${prioSel(t)}
       ${sel(t.id, "owner", owners, t.owner, "owner-" + String(t.owner).replace(/\s+/g, "-"))}
       ${sel(t.id, "status", statuses(), t.status, "st-" + String(t.status).replace(/\s+/g, "-"))}
       ${open ? detailHtml(t) : ""}
@@ -987,7 +896,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     const cd = (drafts.get(t.id) || {}).__comment || "";
     return `<div class="detail" data-id="${esc(t.id)}">
       <div class="d-grid">
-        ${f("Ticket ID", `<input data-d="id" value="${esc(dv(t, "id"))}" maxlength="40" autocapitalize="characters" spellcheck="false"${dis}>`)}
         ${f("Title", `<input data-d="title" value="${esc(dv(t, "title"))}" maxlength="160"${dis}>`, "wide")}
         ${f("Description", `<textarea data-d="notes" rows="3"${dis}>${esc(dv(t, "notes") || "")}</textarea>`, "wide")}
         ${f("Section", `<select data-d="group"${dis}>${opts(sections(), dv(t, "group"))}</select>`)}
@@ -997,7 +905,6 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         ${enemyTier(t.epic)
           ? f("Tier", `<span class="d-note">${tierChip(t.tier)} Set for the whole enemy at the top of its group.</span>`)
           : f("Tier", `<select data-d="tier"${dis}>${opts(TIERS, dv(t, "tier") || "", o => o || "None")}</select>`)}
-        ${f("Priority", `<select data-d="priority"${dis}>${opts(["", ...PRIORITIES], PRIORITIES.includes(dv(t, "priority")) ? dv(t, "priority") : "", o => o || NO_PRIORITY)}</select>`)}
         ${f("Waits on (ticket IDs)", `<input data-d="blockedBy" list="idList" value="${esc(bbStr)}"${dis}>`)}
         <label class="tog"><input type="checkbox" data-d="stretch"${dv(t, "stretch") ? " checked" : ""}${dis}> Stretch goal</label>
         <label class="tog"><input type="checkbox" data-d="later"${dv(t, "later") ? " checked" : ""}${dis}> Later</label>
@@ -1054,22 +961,11 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
         } else if (k === "title") {
           if (!String(v).trim()) { toast("A ticket needs a title."); return; }
           fields.title = String(v).trim();
-        } else if (k === "id") {
-          const nid = normId(v);
-          if (nid === id) continue;
-          const bad = idProblem(nid); if (bad) { toast(bad, 5000); return; }
-          if (idTaken(data, nid, t)) { toast(`${nid} is already used by another ticket.`, 5000); return; }
-          fields.id = nid;
         } else if (k === "epic") fields.epic = String(v).trim() || "Unsorted";
         else fields[k] = v;
       }
       if (!Object.keys(fields).length) return;
-      queueOp({ type: "set", id, fields }, op => {
-        const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id);
-        const nid = op.renamedTo || id;
-        if (nid !== id && openDetails.delete(id)) openDetails.add(nid);
-        if (keep) drafts.set(nid, { __comment: keep });
-      });
+      queueOp({ type: "set", id, fields }, () => { const dd = drafts.get(id) || {}; const keep = dd.__comment; drafts.delete(id); if (keep) drafts.set(id, { __comment: keep }); });
     }
     if (act === "comment") {
       const text = ((drafts.get(id) || {}).__comment || "").trim();
@@ -1170,7 +1066,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
       const to = li.querySelector("[data-sec-name]").value.trim().replace(/\s+/g, " ");
       if (!to) { toast("A section needs a name."); return; }
       if (to === name) return;
-      queueOp({ type: "section", action: "rename", name, to }, () => { if (F.group === name) { F.group = to; saveF(); } renderSections(); });
+      queueOp({ type: "section", action: "rename", name, to }, () => { if (F.tab === name) { F.tab = to; } if (F.sub && F.sub[name]) { F.sub[to] = F.sub[name]; delete F.sub[name]; } saveF(); renderSections(); });
     }
     if (act === "remove") queueOp({ type: "section", action: "remove", name }, renderSections);
     if (act === "up" || act === "down") queueOp({ type: "section", action: "move", name, dir: act === "up" ? -1 : 1 }, renderSections);
@@ -1185,52 +1081,35 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
     $("newBtn").setAttribute("aria-expanded", String(open));
     if (!open) return;
     const pick = (v, list, dflt) => (v !== "All" && list.includes(v) ? v : dflt);
-    $("nt-group").innerHTML = opts(sections(), pick(F.group, sections(), sections()[0]));
+    $("nt-group").innerHTML = opts(sections(), pick(F.tab || "All", sections(), sections()[0]));
+    $("nt-epic").value = currentSub();
     $("nt-act").innerHTML = opts(ACTS, pick(F.act, ACTS, "—"));
     $("nt-discipline").innerHTML = opts(DISC, pick(F.disc, DISC, "Design"));
     $("nt-tier").innerHTML = opts(TIERS, "", o => o || "None");
     $("nt-owner").innerHTML = opts(team(), pick(F.owner, team(), "Unassigned"));
     $("nt-status").innerHTML = opts(statuses(), statuses()[0]);
-    $("nt-priority").innerHTML = opts(["", ...PRIORITIES], PRIORITIES.includes(F.priority) ? F.priority : "", o => o || NO_PRIORITY);
     $("ntErr").textContent = "";
-    ntIdTyped = false; suggestNewId();
     $("newTask").scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => $("nt-title").focus(), 150);
   }
-  // The ID box follows section, group and discipline until someone types their own ID; clearing it switches suggestions back on.
-  let ntIdTyped = false, ntSuggested = "";
-  function suggestNewId() {
-    ntSuggested = suggestId(data, { group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted", discipline: $("nt-discipline").value });
-    if (!ntIdTyped) $("nt-id").value = ntSuggested;
-    $("nt-idHint").textContent = ntIdTyped ? `Suggested: ${ntSuggested}` : "Suggested from section, group and discipline. Type to change it.";
-  }
-  $("nt-id").addEventListener("input", () => { ntIdTyped = !!$("nt-id").value.trim(); suggestNewId(); });
-  ["nt-group", "nt-discipline"].forEach(id => $(id).addEventListener("change", suggestNewId));
-  $("nt-epic").addEventListener("input", suggestNewId);
   $("newBtn").addEventListener("click", () => openNew($("newTask").hidden));
   $("ntCancel").addEventListener("click", () => openNew(false));
   $("ntForm").addEventListener("submit", e => {
     e.preventDefault();
     const title = $("nt-title").value.trim();
     if (!title) { $("ntErr").textContent = "Give the task a title."; return; }
-    const wantId = normId($("nt-id").value) || ntSuggested;
-    const suggested = !ntIdTyped;
-    if (wantId) {
-      const bad = idProblem(wantId); if (bad) { $("ntErr").textContent = bad; return; }
-      if (idTaken(data, wantId) && !suggested) { $("ntErr").textContent = `${wantId} is already used by another ticket. Pick a different ID.`; return; }
-    }
-    const { ids, unknown } = parseIds($("nt-blockedBy").value, wantId || null);
+    const { ids, unknown } = parseIds($("nt-blockedBy").value, null);
     if (unknown.length) { $("ntErr").textContent = `Unknown ticket ID: ${unknown.join(", ")}`; return; }
     const ticket = {
       title, notes: $("nt-notes").value.trim(), group: $("nt-group").value, epic: $("nt-epic").value.trim() || "Unsorted",
       act: $("nt-act").value, discipline: $("nt-discipline").value, tier: $("nt-tier").value, owner: $("nt-owner").value,
-      status: $("nt-status").value, priority: $("nt-priority").value, blockedBy: ids, stretch: $("nt-stretch").checked, later: $("nt-later").checked,
+      status: $("nt-status").value, blockedBy: ids, stretch: $("nt-stretch").checked, later: $("nt-later").checked,
       comments: [], createdBy: login || "", createdAt: new Date().toISOString(),
     };
     $("ntSubmit").disabled = true;
-    queueOp({ type: "add", ticket, wantId, suggested }, op => {
+    queueOp({ type: "add", ticket }, op => {
       $("ntForm").reset(); openNew(false);
-      openEpics.add(ticket.group + "|" + ticket.epic);
+      F.tab = ticket.group; F.sub = { ...(F.sub || {}), [ticket.group]: ticket.epic }; saveF(); render();
       if (!matches({ ...ticket, id: op.newId })) toast(`Added ${op.newId}. Your current filters hide it.`, 5000);
     }).finally(() => { $("ntSubmit").disabled = false; });
   });
@@ -1238,40 +1117,70 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
   function render() {
     if ($("board").hidden) return;
     renderSummary();
-    const shown = tickets().filter(matches);
-    if (F.sort === "priority") shown.sort((a, b) => prioRank(a) - prioRank(b));
-    $("fClear").disabled = Object.keys(F_DEFAULT).every(k => F[k] === F_DEFAULT[k]);
-    $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
-    const filtering = F.search || F.group !== "All" || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.priority !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
-    let html = "";
     if (sections().join("|") !== lastSections) fillFilters();
-    for (const g of sections()) {
-      const inG = shown.filter(t => t.group === g);
-      if (!inG.length) {
-        if (!filtering && !tickets().some(t => t.group === g)) html += `<section class="section"><h3>${esc(g)}<span>0 tickets</span></h3><div class="empty sec-empty">No tickets yet. Use <b>+ New task</b> and pick ${esc(g)} as the section.</div></section>`;
-        continue;
-      }
-      const epics = [];
-      for (const t of inG) { let e = epics.find(x => x.name === t.epic); if (!e) epics.push(e = { name: t.epic, items: [] }); e.items.push(t); }
-      html += `<section class="section"><h3>${esc(g)}<span>${inG.length} ticket${inG.length === 1 ? "" : "s"}</span></h3>`;
-      for (const e of epics) {
-        const all = tickets().filter(t => t.epic === e.name && inScope(t));
-        const d = all.filter(isDone).length;
-        const tiers = [...new Set(all.map(t => t.tier).filter(Boolean))];
-        const acts = [...new Set(all.map(t => t.act).filter(a => a && a !== "—"))];
-        const key = g + "|" + e.name;
-        const open = filtering || openEpics.has(key);
-        html += `<details class="epic" data-key="${esc(key)}"${open ? " open" : ""}>
-          <summary><span class="epic-name">${esc(e.name)}</span>${tiers.map(tierChip).join("")}
-          <span class="epic-meta">${acts.join(" · ")}<span>${d}/${all.length}</span><span class="mini"><i style="width:${all.length ? 100 * d / all.length : 0}%"></i></span></span></summary>
-          <div class="rows">${tierBar(g, e.name)}${e.items.map(rowHtml).join("")}</div></details>`;
-      }
-      html += `</section>`;
-    }
-    $("list").innerHTML = html || `<div class="empty">No tickets match these filters.</div>`;
+    const secs = sections();
+    if (!secs.includes(F.tab)) F.tab = secs[0];
+    const shown = tickets().filter(matches);
+    $("shown").textContent = `${shown.length} of ${tickets().filter(inScope).length} shown`;
+    const filtering = F.search || F.act !== "All" || F.disc !== "All" || F.owner !== "All" || F.ready || (F.status !== "All" && F.status !== "Open");
+    const plural = n => `${n} ticket${n === 1 ? "" : "s"}`;
+    const countIn = s => shown.filter(t => t.group === s).length;
+
+    // section tabs
+    const secTabs = secs.map(s => {
+      const n = countIn(s);
+      return `<button type="button" role="tab" class="tab${s === F.tab ? " on" : ""}${n ? "" : " dim"}" data-tab="${esc(s)}" aria-selected="${s === F.tab}">${esc(s)}<span class="tab-n">${n}</span></button>`;
+    }).join("");
+
+    // groups inside the current section, in board order
+    const secAll = tickets().filter(t => t.group === F.tab);
+    const groups = [...new Set(secAll.map(t => t.epic))].map(name => {
+      const all = secAll.filter(t => t.epic === name && inScope(t));
+      return { name, all, items: shown.filter(t => t.group === F.tab && t.epic === name), done: all.filter(isDone).length };
+    }).filter(g => g.items.length || (!filtering && g.all.length));
+    let sub = (F.sub || {})[F.tab];
+    if (groups.length <= 1) sub = groups[0] ? groups[0].name : "__all";
+    else if (sub !== "__all" && !groups.some(g => g.name === sub && g.items.length)) sub = (groups.find(g => g.items.length) || groups[0]).name;
+
+    const secCount = countIn(F.tab);
+    const subTabs = groups.length > 1 ? `<div class="subtabs" role="tablist" aria-label="Groups in ${esc(F.tab)}">
+      <button type="button" role="tab" class="sub${sub === "__all" ? " on" : ""}" data-sub="__all" aria-selected="${sub === "__all"}">All<span class="sub-n">${secCount}</span></button>
+      ${groups.map(g => {
+        const tier = enemyTier(g.name);
+        return `<button type="button" role="tab" class="sub${sub === g.name ? " on" : ""}${g.items.length ? "" : " dim"}" data-sub="${esc(g.name)}" aria-selected="${sub === g.name}">${tier ? `<span class="sub-tier tier-${tier}">${tier}</span>` : ""}${esc(g.name)}<span class="sub-n">${g.done}/${g.all.length}</span></button>`;
+      }).join("")}
+    </div>` : "";
+
+    const groupBlock = g => {
+      const acts = [...new Set(g.all.map(t => t.act).filter(a => a && a !== "—"))];
+      return `<div class="grp">
+        <div class="grp-head"><span class="grp-name">${esc(g.name)}</span>${tierChip(enemyTier(g.name) || "")}<span class="epic-meta">${acts.join(" · ")}<span>${g.done}/${g.all.length} done</span><span class="mini"><i style="width:${g.all.length ? 100 * g.done / g.all.length : 0}%"></i></span></span></div>
+        <div class="rows">${tierBar(F.tab, g.name)}${g.items.length ? g.items.map(rowHtml).join("") : `<div class="empty sec-empty">No tickets in this group match your filters.</div>`}</div>
+      </div>`;
+    };
+
+    let content;
+    if (!secAll.length) content = `<div class="empty sec-empty">No tickets in ${esc(F.tab)} yet. Use <b>+ New task</b> and pick ${esc(F.tab)} as the section.</div>`;
+    else if (!secCount) {
+      const elsewhere = secs.filter(s => s !== F.tab && countIn(s));
+      content = `<div class="empty sec-empty">Nothing in ${esc(F.tab)} matches your filters.${elsewhere.length ? ` Matches in: ${elsewhere.map(s => `<button type="button" class="linkish" data-tab="${esc(s)}">${esc(s)} (${countIn(s)})</button>`).join(" ")}` : ""}</div>`;
+    } else if (sub === "__all") content = groups.filter(g => g.items.length).map(groupBlock).join("");
+    else content = groupBlock(groups.find(g => g.name === sub));
+
+    $("list").innerHTML = `<div class="tabs" role="tablist" aria-label="Sections">${secTabs}</div>${subTabs}<div class="tab-body">${content}</div>`;
     $("epicList").innerHTML = [...new Set(tickets().map(t => t.epic).filter(Boolean))].map(x => `<option value="${esc(x)}">`).join("");
     $("idList").innerHTML = tickets().map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join("");
   }
+  const currentSub = () => {
+    const s = (F.sub || {})[F.tab];
+    return s && s !== "__all" ? s : "";
+  };
+  $("list").addEventListener("click", e => {
+    const tab = e.target.closest("[data-tab]");
+    if (tab) { F.tab = tab.dataset.tab; saveF(); render(); const el = [...document.querySelectorAll("[data-tab].tab")].find(x => x.dataset.tab === F.tab); if (el) el.focus({ preventScroll: true }); return; }
+    const sub = e.target.closest("[data-sub]");
+    if (sub) { F.sub = { ...(F.sub || {}), [F.tab]: sub.dataset.sub }; saveF(); render(); const el = [...document.querySelectorAll("[data-sub]")].find(x => x.dataset.sub === sub.dataset.sub); if (el) el.focus({ preventScroll: true }); }
+  });
   // ---------- enemy tier ----------
   const ENEMY_TIERS = ["T1", "T2", "T3"];
   const enemyTier = epic => {
@@ -1309,7 +1218,7 @@ details.epic[open] > summary::before { transform: rotate(90deg); }
 
   // ---------- export ----------
   $("exportBtn").addEventListener("click", () => {
-    const cols = ["id", "epic", "group", "act", "discipline", "tier", "priority", "title", "notes", "owner", "status", "blockedBy", "stretch", "later"];
+    const cols = ["id", "epic", "group", "act", "discipline", "tier", "title", "notes", "owner", "status", "blockedBy", "stretch", "later"];
     const q = v => `"${String(Array.isArray(v) ? v.join(" ") : v ?? "").replace(/"/g, '""')}"`;
     const csv = [cols.join(","), ...tickets().filter(matches).map(t => cols.map(c => q(t[c])).join(","))].join("\n");
     const a = document.createElement("a");
